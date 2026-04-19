@@ -1,6 +1,6 @@
 [package]
 name = "qaren-cli"
-version = "0.0.1"
+version = "0.1.0"
 edition = "2021"
 description = "CLI application for Qaren configuration comparison tool"
 
@@ -10,3 +10,10 @@ path = "src/main.rs"
 
 [dependencies]
 qaren-core = { path = "../qaren-core" }
+clap = { version = "4.5", features = ["derive"] }
+colored = "2.1"
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.0"
+tempfile = "3.8"

@@ -6,6 +6,7 @@ description = "Core library for Qaren configuration comparison tool"
 
 [dependencies]
 thiserror = "2.0"
+similar = "2.6"
 
 [dev-dependencies]
 quickcheck = "1.0"
