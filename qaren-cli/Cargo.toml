@@ -1,0 +1,12 @@
+[package]
+name = "qaren-cli"
+version = "0.0.1"
+edition = "2021"
+description = "CLI application for Qaren configuration comparison tool"
+
+[[bin]]
+name = "qaren"
+path = "src/main.rs"
+
+[dependencies]
+qaren-core = { path = "../qaren-core" }

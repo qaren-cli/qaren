@@ -1,0 +1,13 @@
+[package]
+name = "qaren-core"
+version = "0.1.0"
+edition = "2021"
+description = "Core library for Qaren configuration comparison tool"
+
+[dependencies]
+thiserror = "2.0"
+
+[dev-dependencies]
+quickcheck = "1.0"
+quickcheck_macros = "1.0"
+tempfile = "3.8"
