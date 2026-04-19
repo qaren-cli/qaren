@@ -370,14 +370,13 @@ mod property_tests {
     }
 
     /// Sanitize value
+    /// Sanitize value
     fn sanitize_value(s: &str) -> String {
-        s.chars()
-            .filter(|c| is_safe_char(*c))
-            .collect::<String>()
-            .replace(" #", "")
-            .replace(" //", "")
-            .trim()
-            .to_string()
+        let clean: String = s.chars()
+            .filter(|c| is_safe_char(*c) && *c != '#' && *c != '/')
+            .collect();
+            
+        clean.trim().to_string()
     }
 
     /// Build a ConfigFile from raw pairs (deduplicates)

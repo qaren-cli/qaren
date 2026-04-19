@@ -6,7 +6,16 @@
 //! files always contain the actual values.
 
 /// Keywords that trigger secret masking (checked case-insensitively).
-const SECRET_KEYWORDS: &[&str] = &["key", "password", "secret", "token", "auth"];
+///
+/// Includes the core PRD keywords plus defense-in-depth additions
+/// from the chaos audit (Finding 4).
+const SECRET_KEYWORDS: &[&str] = &[
+    // PRD-mandated keywords
+    "key", "password", "secret", "token", "auth",
+    // Defense-in-depth additions (chaos audit Finding 4)
+    "credential", "cert", "private", "signing",
+    "connection_string", "conn_str",
+];
 
 /// Check if a key should have its value masked.
 ///
@@ -87,6 +96,38 @@ mod tests {
         assert!(!should_mask("APP_NAME"));
         assert!(!should_mask("LOG_LEVEL"));
         assert!(!should_mask("REDIS_URL"));
+    }
+
+    // ── Finding 4: expanded keyword coverage ────────────────────────
+
+    #[test]
+    fn test_mask_key_with_credential() {
+        assert!(should_mask("AWS_CREDENTIAL"));
+        assert!(should_mask("CREDENTIAL_FILE"));
+    }
+
+    #[test]
+    fn test_mask_key_with_cert() {
+        assert!(should_mask("SSL_CERT"));
+        assert!(should_mask("TLS_CERT_PATH"));
+    }
+
+    #[test]
+    fn test_mask_key_with_private() {
+        assert!(should_mask("PRIVATE_KEY_PATH"));
+        assert!(should_mask("SSH_PRIVATE"));
+    }
+
+    #[test]
+    fn test_mask_key_with_signing() {
+        assert!(should_mask("SIGNING_KEY_ID"));
+        assert!(should_mask("JWT_SIGNING"));
+    }
+
+    #[test]
+    fn test_mask_key_with_connection_string() {
+        assert!(should_mask("CONNECTION_STRING"));
+        assert!(should_mask("DB_CONN_STR"));
     }
 
     // ── mask_value tests ────────────────────────────────────────────

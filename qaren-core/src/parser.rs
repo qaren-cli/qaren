@@ -38,6 +38,8 @@ pub fn parse_content(
     file_path: &Path,
     options: &ParseOptions,
 ) -> QarenResult<ConfigFile> {
+    // Strip UTF-8 BOM if present (Finding 7: Windows editors add BOM)
+    let content = content.strip_prefix('\u{FEFF}').unwrap_or(content);
     let mut pairs = HashMap::new();
 
     for (line_idx, line) in content.lines().enumerate() {
@@ -69,6 +71,10 @@ fn should_skip_line(line: &str, options: &ParseOptions) -> bool {
     }
 
     for prefix in &options.comment_prefixes {
+        // Finding 6: skip empty prefixes to prevent matching all lines
+        if prefix.is_empty() {
+            continue;
+        }
         if trimmed.starts_with(prefix.as_str()) {
             return true;
         }
@@ -114,6 +120,11 @@ fn process_key(token: &str, options: &ParseOptions) -> String {
     let without_export = trimmed.strip_prefix("export ").unwrap_or(trimmed);
     let without_export = without_export.trim();
 
+    // Finding 1: A bare `export` with no actual key name is not valid
+    if without_export == "export" || without_export.is_empty() {
+        return String::new();
+    }
+
     if options.strip_quotes {
         strip_surrounding_quotes(without_export)
     } else {
@@ -125,6 +136,13 @@ fn process_key(token: &str, options: &ParseOptions) -> String {
 /// strip surrounding quotes.
 fn process_value(token: &str, options: &ParseOptions) -> String {
     let trimmed = token.trim();
+
+    // Finding 2: If the entire value starts with a comment marker, treat as empty
+    for prefix in &options.comment_prefixes {
+        if !prefix.is_empty() && trimmed.starts_with(prefix.as_str()) {
+            return String::new();
+        }
+    }
 
     // Strip inline comments first (before quote stripping)
     let without_comment = strip_inline_comment(trimmed, options);
@@ -546,6 +564,72 @@ mod tests {
             "https://example.com/#section"
         );
     }
+
+    // ── Chaos audit finding tests ───────────────────────────────────
+
+    #[test]
+    fn test_finding1_export_only_line() {
+        // Finding 1: `export =value` should skip — bare "export" is not a valid key
+        let config = parse_default("export =value");
+        assert!(
+            config.pairs.is_empty(),
+            "export =value should be skipped (bare 'export' is not a key)"
+        );
+    }
+
+    #[test]
+    fn test_finding2_value_starts_with_comment_marker() {
+        // Finding 2: `KEY= # comment` → after trim, value is `# comment` → empty
+        let config = parse_default("KEY= # this is a comment");
+        assert_eq!(
+            config.pairs.get("KEY").map(|(v, _)| v.as_str()),
+            Some(""),
+            "Value starting with comment marker should be treated as empty"
+        );
+    }
+
+    #[test]
+    fn test_finding2_value_is_only_hash() {
+        let config = parse_default("KEY=#FF0000");
+        // A value like #FF0000 starts with # so it's treated as a comment → empty
+        assert_eq!(
+            config.pairs.get("KEY").map(|(v, _)| v.as_str()),
+            Some("")
+        );
+    }
+
+    #[test]
+    fn test_finding6_empty_comment_prefix() {
+        // Finding 6: empty string in comment_prefixes should not skip all lines
+        let opts = ParseOptions {
+            comment_prefixes: vec!["".to_string(), "#".to_string()],
+            ..ParseOptions::default()
+        };
+        let config = parse_with("KEY=value\n# comment\nKEY2=value2", &opts);
+        assert_eq!(config.pairs.len(), 2, "Empty prefix should not skip all lines");
+        assert!(config.pairs.contains_key("KEY"));
+        assert!(config.pairs.contains_key("KEY2"));
+    }
+
+    #[test]
+    fn test_finding7_bom_stripped() {
+        // Finding 7: UTF-8 BOM at start of file should be stripped
+        let content = "\u{FEFF}KEY=value";
+        let config = parse_default(content);
+        assert!(
+            config.pairs.contains_key("KEY"),
+            "BOM should be stripped, key should be 'KEY' not '\\u{{FEFF}}KEY'"
+        );
+    }
+
+    #[test]
+    fn test_finding7_bom_with_multiple_lines() {
+        let content = "\u{FEFF}FIRST=one\nSECOND=two";
+        let config = parse_default(content);
+        assert_eq!(config.pairs.len(), 2);
+        assert!(config.pairs.contains_key("FIRST"));
+        assert!(config.pairs.contains_key("SECOND"));
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -580,11 +664,11 @@ mod property_tests {
 
     /// A value that doesn't contain newlines, control chars, or the inline comment pattern
     fn sanitize_value(s: &str) -> String {
-        s.chars()
-            .filter(|c| is_safe_char(*c))
-            .collect::<String>()
-            .replace(" #", "")
-            .replace(" //", "")
+        let clean: String = s.chars()
+            .filter(|c| is_safe_char(*c) && *c != '#' && *c != '/')
+            .collect();
+            
+        clean.trim().to_string()
     }
 
     // ── Property 2: First-Delimiter-Only Splitting ──────────────────
@@ -603,13 +687,7 @@ mod property_tests {
         // Build a value that contains additional '=' characters
         let value_parts: Vec<String> = extra_parts
             .iter()
-            .map(|p| {
-                p.chars()
-                    .filter(|c| is_safe_char(*c))
-                    .collect::<String>()
-                    .replace(" #", "")
-                    .replace(" //", "")
-            })
+            .map(|p| sanitize_value(p))
             .collect();
         let value = value_parts.join("=");
         let line = format!("{}={}", key, value);
@@ -672,12 +750,7 @@ mod property_tests {
         };
 
         // Clean up value to not contain comment markers, control chars, or newlines
-        let value: String = value
-            .chars()
-            .filter(|c| is_safe_char(*c))
-            .collect::<String>()
-            .replace(" #", "")
-            .replace(" //", "");
+        let value = sanitize_value(&value);
 
         // The parser trims values, so compare against trimmed
         let expected = value.trim().to_string();
