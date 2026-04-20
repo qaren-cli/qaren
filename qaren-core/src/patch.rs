@@ -337,7 +337,7 @@ mod property_tests {
     use super::*;
     use crate::diff::semantic_diff;
     use crate::parser;
-    use crate::types::ConfigFile;
+    use crate::types::{ConfigFile, DiffOptions};
     use quickcheck::TestResult;
     use quickcheck_macros::quickcheck;
     use std::collections::{HashMap, HashSet};
@@ -410,7 +410,7 @@ mod property_tests {
             return TestResult::discard();
         }
 
-        let diff = semantic_diff(&file_a, &file_b);
+        let diff = semantic_diff(&file_a, &file_b, &DiffOptions::default());
         let opts = ParseOptions::default();
         let tmp = match TempDir::new() {
             Ok(t) => t,
@@ -463,7 +463,7 @@ mod property_tests {
         let file_a = build_config(&pairs_a);
         let file_b = build_config(&pairs_b);
 
-        let diff = semantic_diff(&file_a, &file_b);
+        let diff = semantic_diff(&file_a, &file_b, &DiffOptions::default());
 
         if diff.missing_in_file2.is_empty() {
             return TestResult::discard();
@@ -512,7 +512,7 @@ mod property_tests {
         let file_a = build_config(&pairs_a);
         let file_b = build_config(&pairs_b);
 
-        let diff = semantic_diff(&file_a, &file_b);
+        let diff = semantic_diff(&file_a, &file_b, &DiffOptions::default());
 
         if diff.missing_in_file2.is_empty() && diff.missing_in_file1.is_empty() {
             return TestResult::discard();

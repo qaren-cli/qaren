@@ -1,0 +1,155 @@
+tasks 1 to 11 test 
+
+- change kvp to kv 
+- add option consider space or not
+- delimater not work as expected 
+PS D:\qaren> cargo run --bin qaren -- kvp  scratch\prod.env .\scratch\staging.env -d ":"
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running `target\debug\qaren.exe kvp scratch\prod.env .\scratch\staging.env -d :`
+
+── Missing in file2 (2 keys) ──
+  - DATABASE_URL=postgres: 
+  - REDIS_URL=redis: 
+
+── Missing in file1 (7 keys) ──
+  + LOG_LEVEL: error
+  + REDIS_URL: redis://cache-prod:6379/0
+  + DEBUG_MODE: false
+  + PORT: 8080
+  + DATABASE_URL: "postgres://user:pass@db-prod:5432/main_db
+  + new_feature_flag: true
+  + API_KEY: ***MASKED***
+
+Summary: 2 missing in file2, 7 missing in file1, 0 modified, 0 identical
+error: process didn't exit successfully: `target\debug\qaren.exe kvp scratch\prod.env .\scratch\staging.env -d :` (exit code: 1)
+PS D:\qaren> 
+- file1 and file should be real name of the file
+PS D:\qaren> cargo run --bin qaren -- kvp  scratch\prod.env .\scratch\staging.env
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running `target\debug\qaren.exe kvp scratch\prod.env .\scratch\staging.env`
+
+── Modified (1 keys) ──
+  ~ API_KEY: ***MASKED*** → ***MASKED***
+
+── Identical (6 keys) ──
+  = REDIS_URL
+  = DATABASE_URL
+  = LOG_LEVEL
+  = new_feature_flag
+  = DEBUG_MODE
+  = PORT
+
+Summary: 0 missing in file2, 0 missing in file1, 1 modified, 6 identical
+error: process didn't exit successfully: `target\debug\qaren.exe kvp scratch\prod.env .\scratch\staging.env` (exit code: 1)
+-----------------------
+cmd arch
+
+qaren <type> file1 file2 --option
+qaren <type>  --option file1 file2 
+-----------------------
+- add more option like 
+--ignore-qoutes 
+# qaren kv --ignore-qoutes file1 file2
+# qaren kv --strip-qoutes file1 file2
+# qaren kv  file1 file2 --ignore-qoutes
+# qaren kv -s file1 file2 (or anything follow linux philo)
+--ignore-white-sapces | -w
+will follow the same above 
+--ignore-case | -i
+same above
+--show-secrets 
+same also that will make secrets appear don't star them
+--breif
+summary 
+
+- important thing 
+exit code must be 0 in case the command executed successfully becuse that is a normal behavior 
+setting configuration 
+qaren config exit toggle (change the exited code for command output incase unsimilar file )
+qaren config exit show (show current configuration for the exied code default all successfully proceded command return 0)
+qaren config color toggle (change the output if make it colored or not)
+qaren config color show	(default colored)
+
+- generate-missing dosn't work the output is empty file 
+\scratch\local.env
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running `target\debug\qaren.exe kvp scratch\prod.env .\scratch\staging.env --generate-missing .\scratch\local.env`
+
+── Modified (1 keys) ──
+  ~ DEBUG_MODE: false → true
+
+── Identical (6 keys) ──
+  = REDIS_URL
+  = DATABASE_URL
+  = new_feature_flag
+  = PORT
+  = LOG_LEVEL
+  = API_KEY
+
+Summary: 0 missing in file2, 0 missing in file1, 1 modified, 6 identical
+
+✔ Patch file created: .\scratch\local.env
+error: process didn't exit successfully: `target\debug\qaren.exe kvp scratch\prod.env .\scratch\staging.env --generate-missing .\scratch\local.env` (exit code: 1)
+PS D:\qaren> 
+------- enhance diff ------
+add all diff linux features 
+
+
+- also don't appear the identical files at the outputs we want to make output simple 
+- we need to create a comperhansive --help option like most pupaulr tool at linux 
+lsit all availble command and option breif explaination , use case how  to use 
+- all option like --ignore-case must have a short way like -i with considering linux users 
+
+PS D:\qaren> cargo run --bin qaren -- kvp  scratch\prod.env .\scratch\staging.env
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running `target\debug\qaren.exe kvp scratch\prod.env .\scratch\staging.env`
+
+── Missing in file2 (7 keys) ──
+  - API_KEY: ***MASKED***
+  - REDIS_URL: redis://cache-prod:6379/0
+  - new_feature_flag: true
+  - DATABASE_URL: postgres://user:pass@db-prod:5432/main_db
+  - DEBUG_MODE: false
+  - LOG_LEVEL: error
+  - PORT: 8080
+
+
+PS D:\qaren> cargo run --bin qaren -- kvp  scratch\staging.env .\scratch\prod.env   
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running `target\debug\qaren.exe kvp scratch\staging.env .\scratch\prod.env`
+
+── Missing in file1 (7 keys) ──
+  + REDIS_URL: redis://cache-prod:6379/0
+  + DATABASE_URL: postgres://user:pass@db-prod:5432/main_db
+  + LOG_LEVEL: error
+  + new_feature_flag: true
+  + DEBUG_MODE: false
+  + API_KEY: ***MASKED***
+  + PORT: 8080
+
+Summary: 0 missing in file2, 7 missing in file1, 0 modified, 0 identical
+error: process didn't exit successfully: `target\debug\qaren.exe kvp scratch\staging.env .\scratch\prod.env` (exit code: 1)
+PS D:\qaren> 
+
+
+- option -d ":" (we alse want to add --delima) doseent execute as expected 
+ PS D:\qaren> cargo run --bin qaren -- kvp  scratch\staging.env .\scratch\prod.env -d ":"        
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.09s
+     Running `target\debug\qaren.exe kvp scratch\staging.env .\scratch\prod.env -d :`
+
+── Missing in file2 (7 keys) ──
+  - new_feature_flag: true
+  - API_KEY: ***MASKED***
+  - DEBUG_MODE: false
+  - REDIS_URL: redis://cache-prod:6379/0
+  - DATABASE_URL: postgres://user:pass@db-prod:5432/main_db
+  - PORT: 8080
+  - LOG_LEVEL: error
+
+── Missing in file1 (2 keys) ──
+  + REDIS_URL=redis:
+  + DATABASE_URL=postgres:
+
+Summary: 7 missing in file2, 2 missing in file1, 0 modified, 0 identical
+error: process didn't exit successfully: `target\debug\qaren.exe kvp scratch\staging.env .\scratch\prod.env -d :` (exit code: 1)
+PS D:\qaren> 

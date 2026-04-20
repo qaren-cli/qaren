@@ -40,6 +40,10 @@ pub struct ParseOptions {
     pub strip_quotes: bool,
     /// Comment prefixes to ignore (default: `["#", "//"]`)
     pub comment_prefixes: Vec<String>,
+    /// Compare values case-insensitively (default: `false`)
+    pub ignore_case: bool,
+    /// Ignore leading/trailing whitespace differences in values (default: `false`)
+    pub ignore_whitespace: bool,
 }
 
 impl Default for ParseOptions {
@@ -48,6 +52,8 @@ impl Default for ParseOptions {
             delimiter: '=',
             strip_quotes: false,
             comment_prefixes: vec!["#".to_string(), "//".to_string()],
+            ignore_case: false,
+            ignore_whitespace: false,
         }
     }
 }
@@ -80,6 +86,19 @@ impl DiffResult {
             + self.modified.len()
     }
 }
+
+/// Options that control how values are compared during diffing.
+///
+/// These are separate from [`ParseOptions`] because they apply **after**
+/// parsing — the raw parsed values are always stored unchanged.
+#[derive(Debug, Clone, Default)]
+pub struct DiffOptions {
+    /// Compare values case-insensitively.
+    pub ignore_case: bool,
+    /// Collapse internal whitespace and trim before comparing.
+    pub ignore_whitespace: bool,
+}
+
 
 /// Represents a key-value pair that differs between two files.
 #[derive(Debug, Clone, PartialEq, Eq)]

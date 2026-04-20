@@ -16,6 +16,49 @@ use crate::types::{ConfigFile, ParseOptions};
 use std::collections::HashMap;
 use std::path::Path;
 
+/// Heuristically detect the delimiter used in a configuration file.
+///
+/// Scans non-empty, non-comment lines and counts occurrences of `=` and
+/// `: ` (colon + space, to avoid false positives from URLs like
+/// `postgres://host:5432`).  Returns whichever delimiter appears in more
+/// lines; falls back to `'='` on a tie or empty input.
+///
+/// # Examples
+///
+/// ```
+/// # use qaren_core::detect_delimiter;
+/// assert_eq!(detect_delimiter("KEY=value\nDB=host"), '=');
+/// assert_eq!(detect_delimiter("key: value\ndb: host"), ':');
+/// ```
+pub fn detect_delimiter(content: &str) -> char {
+    let mut eq_count: usize = 0;
+    let mut colon_count: usize = 0;
+
+    for line in content.lines() {
+        let trimmed = line.trim();
+        // Skip empty lines and comment lines
+        if trimmed.is_empty()
+            || trimmed.starts_with('#')
+            || trimmed.starts_with("//")
+        {
+            continue;
+        }
+        if trimmed.contains('=') {
+            eq_count += 1;
+        }
+        // `: ` (colon-space) distinguishes YAML/PM2 format from URLs
+        if trimmed.contains(": ") {
+            colon_count += 1;
+        }
+    }
+
+    if colon_count > eq_count {
+        ':'
+    } else {
+        '='
+    }
+}
+
 /// Parse a configuration file from disk with the given options.
 ///
 /// Reads the file into memory and delegates to [`parse_content`].
@@ -28,6 +71,7 @@ pub fn parse_file(
         .map_err(|e| QarenError::from_io_with_path(e, file_path.to_path_buf()))?;
     parse_content(&content, file_path, options)
 }
+
 
 /// Parse configuration content from an in-memory string.
 ///

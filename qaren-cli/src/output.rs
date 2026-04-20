@@ -1,7 +1,8 @@
 //! Terminal output formatting for comparison results.
 //!
-//! Handles colored output for diff results (green = additions,
-//! red = deletions, yellow = modifications) and summary lines.
+//! Handles coloured output for diff results and summary lines.
+//! Identical keys are hidden by default; pass `verbose = true` to show them.
+//! Pass `brief = true` to suppress per-key details and only print the summary.
 
 use colored::Colorize;
 use qaren_core::{DiffResult, LiteralDiffResult};
@@ -10,98 +11,116 @@ use crate::masking::mask_value;
 
 /// Print the result of a semantic key-value comparison to stdout.
 ///
-/// Output is grouped into sections: Missing in file2, Missing in file1,
-/// Modified, and Identical. Values are masked according to the
-/// `show_secrets` flag.
-pub fn print_diff_result(result: &DiffResult, show_secrets: bool) {
+/// - `show_secrets` — when `true`, skip masking and show raw values
+/// - `verbose`      — when `true`, also display identical keys
+/// - `brief`        — when `true`, print summary line only (no per-key output)
+/// - `label1`       — display name for file1 (e.g. the filename stem)
+/// - `label2`       — display name for file2
+pub fn print_diff_result(
+    result: &DiffResult,
+    show_secrets: bool,
+    verbose: bool,
+    brief: bool,
+    label1: &str,
+    label2: &str,
+) {
     if result.is_identical() {
         println!("{}", "✔ Files are identical".green().bold());
         return;
     }
 
-    // ── Missing in file2 (present in source, absent in target) ──
-    if !result.missing_in_file2.is_empty() {
-        println!(
-            "\n{}",
-            format!(
-                "── Missing in file2 ({} keys) ──",
-                result.missing_in_file2.len()
-            )
-            .red()
-            .bold()
-        );
-        for pair in &result.missing_in_file2 {
-            let display_val = mask_value(&pair.key, &pair.value, show_secrets);
-            println!("  {} {}: {}", "-".red(), pair.key.red(), display_val.red());
-        }
-    }
-
-    // ── Missing in file1 (present in target, absent in source) ──
-    if !result.missing_in_file1.is_empty() {
-        println!(
-            "\n{}",
-            format!(
-                "── Missing in file1 ({} keys) ──",
-                result.missing_in_file1.len()
-            )
-            .green()
-            .bold()
-        );
-        for pair in &result.missing_in_file1 {
-            let display_val = mask_value(&pair.key, &pair.value, show_secrets);
+    if !brief {
+        // ── Only in file1 (missing from file2) ──────────────────────
+        if !result.missing_in_file2.is_empty() {
             println!(
-                "  {} {}: {}",
-                "+".green(),
-                pair.key.green(),
-                display_val.green()
-            );
-        }
-    }
-
-    // ── Modified keys ──
-    if !result.modified.is_empty() {
-        println!(
-            "\n{}",
-            format!("── Modified ({} keys) ──", result.modified.len())
-                .yellow()
+                "\n{}",
+                format!(
+                    "── Only in {} ({} keys) ──",
+                    label1,
+                    result.missing_in_file2.len()
+                )
+                .red()
                 .bold()
-        );
-        for m in &result.modified {
-            let val1 = mask_value(&m.key, &m.value_file1, show_secrets);
-            let val2 = mask_value(&m.key, &m.value_file2, show_secrets);
+            );
+            for pair in &result.missing_in_file2 {
+                let display_val = mask_value(&pair.key, &pair.value, show_secrets);
+                println!("  {} {}={}", "-".red(), pair.key.red(), display_val.red());
+            }
+        }
+
+        // ── Only in file2 (missing from file1) ──────────────────────
+        if !result.missing_in_file1.is_empty() {
             println!(
-                "  {} {}: {} → {}",
-                "~".yellow(),
-                m.key.yellow(),
-                val1.red(),
-                val2.green()
-            );
-        }
-    }
-
-    // ── Identical keys ──
-    if !result.identical.is_empty() {
-        println!(
-            "\n{}",
-            format!("── Identical ({} keys) ──", result.identical.len())
-                .dimmed()
+                "\n{}",
+                format!(
+                    "── Only in {} ({} keys) ──",
+                    label2,
+                    result.missing_in_file1.len()
+                )
+                .green()
                 .bold()
-        );
-        for key in &result.identical {
-            println!("  {} {}", "=".dimmed(), key.dimmed());
+            );
+            for pair in &result.missing_in_file1 {
+                let display_val = mask_value(&pair.key, &pair.value, show_secrets);
+                println!("  {} {}={}", "+".green(), pair.key.green(), display_val.green());
+            }
+        }
+
+        // ── Modified keys ────────────────────────────────────────────
+        if !result.modified.is_empty() {
+            println!(
+                "\n{}",
+                format!("── Modified ({} keys) ──", result.modified.len())
+                    .yellow()
+                    .bold()
+            );
+            for m in &result.modified {
+                let val1 = mask_value(&m.key, &m.value_file1, show_secrets);
+                let val2 = mask_value(&m.key, &m.value_file2, show_secrets);
+                println!(
+                    "  {} {}: {} → {}",
+                    "~".yellow(),
+                    m.key.yellow(),
+                    val1.red(),
+                    val2.green()
+                );
+            }
+        }
+
+        // ── Identical keys (only when --verbose / -v) ────────────────
+        if verbose && !result.identical.is_empty() {
+            println!(
+                "\n{}",
+                format!("── Identical ({} keys) ──", result.identical.len())
+                    .dimmed()
+                    .bold()
+            );
+            let mut sorted = result.identical.clone();
+            sorted.sort();
+            for key in &sorted {
+                println!("  {} {}", "=".dimmed(), key.dimmed());
+            }
         }
     }
 
-    // ── Summary ──
+    // ── Summary ──────────────────────────────────────────────────────
     println!();
     println!(
         "{}",
         format!(
-            "Summary: {} missing in file2, {} missing in file1, {} modified, {} identical",
+            "Summary: {} only in {}, {} only in {}, {} modified{}",
             result.missing_in_file2.len(),
+            label1,
             result.missing_in_file1.len(),
+            label2,
             result.modified.len(),
-            result.identical.len()
+            if result.identical.is_empty() {
+                String::new()
+            } else if verbose {
+                format!(", {} identical", result.identical.len())
+            } else {
+                format!(", {} identical (use -v to show)", result.identical.len())
+            }
         )
         .bold()
     );
@@ -118,7 +137,7 @@ pub fn print_literal_diff(result: &LiteralDiffResult) {
         return;
     }
 
-    // ── Deletions ──
+    // ── Deletions ────────────────────────────────────────────────────
     for line in &result.deletions {
         let content = line.content.trim_end();
         println!(
@@ -127,7 +146,7 @@ pub fn print_literal_diff(result: &LiteralDiffResult) {
         );
     }
 
-    // ── Additions ──
+    // ── Additions ────────────────────────────────────────────────────
     for line in &result.additions {
         let content = line.content.trim_end();
         println!(
@@ -136,7 +155,7 @@ pub fn print_literal_diff(result: &LiteralDiffResult) {
         );
     }
 
-    // ── Modifications ──
+    // ── Modifications ────────────────────────────────────────────────
     for (old, new) in &result.modifications {
         let old_content = old.content.trim_end();
         let new_content = new.content.trim_end();
@@ -146,7 +165,7 @@ pub fn print_literal_diff(result: &LiteralDiffResult) {
         );
     }
 
-    // ── Summary ──
+    // ── Summary ──────────────────────────────────────────────────────
     println!();
     println!(
         "{}",

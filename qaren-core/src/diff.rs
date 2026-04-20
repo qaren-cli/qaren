@@ -7,8 +7,28 @@
 //! - **Literal diff** (`literal_diff`): Line-by-line text comparison using
 //!   the Myers diff algorithm via the `similar` crate.
 
-use crate::types::{ConfigFile, DiffLine, DiffResult, KvPair, LiteralDiffResult, ModifiedPair};
+use crate::types::{
+    ConfigFile, DiffLine, DiffResult, DiffOptions, KvPair, LiteralDiffResult, ModifiedPair,
+};
 use similar::{ChangeTag, TextDiff};
+
+/// Normalise a value string for comparison purposes according to `DiffOptions`.
+///
+/// Only used for **equality checking** — the original strings are always
+/// stored in the result so display / patch generation is unaffected.
+#[inline]
+fn normalise(value: &str, opts: &DiffOptions) -> String {
+    let s = if opts.ignore_whitespace {
+        value.split_whitespace().collect::<Vec<_>>().join(" ")
+    } else {
+        value.to_string()
+    };
+    if opts.ignore_case {
+        s.to_lowercase()
+    } else {
+        s
+    }
+}
 
 /// Perform semantic key-value comparison between two configuration files.
 ///
@@ -18,11 +38,13 @@ use similar::{ChangeTag, TextDiff};
 /// - **modified**: keys in both files with different values
 /// - **identical**: keys in both files with the same value
 ///
+/// Pass [`DiffOptions::default()`] for standard exact-match behaviour.
+///
 /// # Complexity
 ///
 /// - **Time**: O(n + m) where n and m are the number of pairs in each file
 /// - **Space**: O(n + m) for storing results
-pub fn semantic_diff(file1: &ConfigFile, file2: &ConfigFile) -> DiffResult {
+pub fn semantic_diff(file1: &ConfigFile, file2: &ConfigFile, opts: &DiffOptions) -> DiffResult {
     let mut missing_in_file2 = Vec::new();
     let mut missing_in_file1 = Vec::new();
     let mut modified = Vec::new();
@@ -32,7 +54,7 @@ pub fn semantic_diff(file1: &ConfigFile, file2: &ConfigFile) -> DiffResult {
     for (key, (value1, line_num1)) in &file1.pairs {
         match file2.pairs.get(key) {
             Some((value2, line_num2)) => {
-                if value1 == value2 {
+                if normalise(value1, opts) == normalise(value2, opts) {
                     identical.push(key.clone());
                 } else {
                     modified.push(ModifiedPair {
@@ -128,6 +150,8 @@ mod tests {
     use std::collections::HashMap;
     use std::path::PathBuf;
 
+    fn default_opts() -> DiffOptions { DiffOptions::default() }
+
     /// Helper to build a ConfigFile from a list of (key, value) pairs.
     fn make_config(pairs: &[(&str, &str)]) -> ConfigFile {
         let mut map = HashMap::new();
@@ -146,7 +170,7 @@ mod tests {
     fn test_identical_files() {
         let file1 = make_config(&[("A", "1"), ("B", "2"), ("C", "3")]);
         let file2 = make_config(&[("A", "1"), ("B", "2"), ("C", "3")]);
-        let result = semantic_diff(&file1, &file2);
+        let result = semantic_diff(&file1, &file2, &default_opts());
 
         assert!(result.is_identical());
         assert_eq!(result.difference_count(), 0);
@@ -160,7 +184,7 @@ mod tests {
     fn test_completely_different_files() {
         let file1 = make_config(&[("A", "1"), ("B", "2")]);
         let file2 = make_config(&[("C", "3"), ("D", "4")]);
-        let result = semantic_diff(&file1, &file2);
+        let result = semantic_diff(&file1, &file2, &default_opts());
 
         assert!(!result.is_identical());
         assert_eq!(result.missing_in_file2.len(), 2);
@@ -173,7 +197,7 @@ mod tests {
     fn test_only_additions() {
         let file1 = make_config(&[("A", "1")]);
         let file2 = make_config(&[("A", "1"), ("B", "2"), ("C", "3")]);
-        let result = semantic_diff(&file1, &file2);
+        let result = semantic_diff(&file1, &file2, &default_opts());
 
         assert!(!result.is_identical());
         assert!(result.missing_in_file2.is_empty());
@@ -185,7 +209,7 @@ mod tests {
     fn test_only_deletions() {
         let file1 = make_config(&[("A", "1"), ("B", "2"), ("C", "3")]);
         let file2 = make_config(&[("A", "1")]);
-        let result = semantic_diff(&file1, &file2);
+        let result = semantic_diff(&file1, &file2, &default_opts());
 
         assert!(!result.is_identical());
         assert_eq!(result.missing_in_file2.len(), 2);
@@ -197,7 +221,7 @@ mod tests {
     fn test_only_modifications() {
         let file1 = make_config(&[("A", "1"), ("B", "2")]);
         let file2 = make_config(&[("A", "10"), ("B", "20")]);
-        let result = semantic_diff(&file1, &file2);
+        let result = semantic_diff(&file1, &file2, &default_opts());
 
         assert!(!result.is_identical());
         assert_eq!(result.modified.len(), 2);
@@ -210,7 +234,7 @@ mod tests {
     fn test_mixed_differences() {
         let file1 = make_config(&[("A", "1"), ("B", "2"), ("C", "3")]);
         let file2 = make_config(&[("A", "1"), ("B", "20"), ("D", "4")]);
-        let result = semantic_diff(&file1, &file2);
+        let result = semantic_diff(&file1, &file2, &default_opts());
 
         assert!(!result.is_identical());
         // A is identical
@@ -233,7 +257,7 @@ mod tests {
     fn test_empty_files() {
         let file1 = make_config(&[]);
         let file2 = make_config(&[]);
-        let result = semantic_diff(&file1, &file2);
+        let result = semantic_diff(&file1, &file2, &default_opts());
 
         assert!(result.is_identical());
         assert_eq!(result.difference_count(), 0);
@@ -243,7 +267,7 @@ mod tests {
     fn test_one_empty_file() {
         let file1 = make_config(&[("A", "1"), ("B", "2")]);
         let file2 = make_config(&[]);
-        let result = semantic_diff(&file1, &file2);
+        let result = semantic_diff(&file1, &file2, &default_opts());
 
         assert!(!result.is_identical());
         assert_eq!(result.missing_in_file2.len(), 2);
@@ -254,7 +278,7 @@ mod tests {
     fn test_exit_code_logic_identical() {
         let file1 = make_config(&[("A", "1")]);
         let file2 = make_config(&[("A", "1")]);
-        let result = semantic_diff(&file1, &file2);
+        let result = semantic_diff(&file1, &file2, &default_opts());
 
         // Exit code 0 for identical
         assert!(result.is_identical());
@@ -264,7 +288,7 @@ mod tests {
     fn test_exit_code_logic_different() {
         let file1 = make_config(&[("A", "1")]);
         let file2 = make_config(&[("A", "2")]);
-        let result = semantic_diff(&file1, &file2);
+        let result = semantic_diff(&file1, &file2, &default_opts());
 
         // Exit code 1 for different
         assert!(!result.is_identical());
@@ -274,11 +298,59 @@ mod tests {
     fn test_modified_pair_tracks_line_numbers() {
         let file1 = make_config(&[("A", "old_value")]);
         let file2 = make_config(&[("A", "new_value")]);
-        let result = semantic_diff(&file1, &file2);
+        let result = semantic_diff(&file1, &file2, &default_opts());
 
         assert_eq!(result.modified.len(), 1);
         assert_eq!(result.modified[0].line_number_file1, 1);
         assert_eq!(result.modified[0].line_number_file2, 1);
+    }
+
+    // ── ignore_case / ignore_whitespace tests ──────────────────────
+
+    #[test]
+    fn test_ignore_case_treats_as_identical() {
+        let file1 = make_config(&[("KEY", "Value")]);
+        let file2 = make_config(&[("KEY", "value")]);
+        let opts = DiffOptions { ignore_case: true, ignore_whitespace: false };
+        let result = semantic_diff(&file1, &file2, &opts);
+        assert!(result.is_identical(), "ignore_case should treat 'Value' == 'value'");
+    }
+
+    #[test]
+    fn test_ignore_case_false_detects_difference() {
+        let file1 = make_config(&[("KEY", "Value")]);
+        let file2 = make_config(&[("KEY", "value")]);
+        let result = semantic_diff(&file1, &file2, &default_opts());
+        assert!(!result.is_identical(), "case-sensitive: 'Value' != 'value'");
+    }
+
+    #[test]
+    fn test_ignore_whitespace_treats_as_identical() {
+        let file1 = make_config(&[("KEY", "hello   world")]);
+        let file2 = make_config(&[("KEY", "hello world")]);
+        let opts = DiffOptions { ignore_case: false, ignore_whitespace: true };
+        let result = semantic_diff(&file1, &file2, &opts);
+        assert!(result.is_identical(), "ignore_whitespace should collapse spaces");
+    }
+
+    #[test]
+    fn test_ignore_whitespace_false_detects_difference() {
+        let file1 = make_config(&[("KEY", "hello   world")]);
+        let file2 = make_config(&[("KEY", "hello world")]);
+        let result = semantic_diff(&file1, &file2, &default_opts());
+        assert!(!result.is_identical(), "whitespace-sensitive: extra spaces differ");
+    }
+
+    #[test]
+    fn test_original_values_preserved_in_result() {
+        // Even when ignoring case, the STORED values should be the originals
+        let file1 = make_config(&[("KEY", "Value")]);
+        let file2 = make_config(&[("KEY", "value")]);
+        let opts = DiffOptions { ignore_case: true, ignore_whitespace: false };
+        let result = semantic_diff(&file1, &file2, &opts);
+        // Identical — but we verify normalise() didn't mutate stored values
+        assert!(result.modified.is_empty());
+        assert!(result.identical.contains(&"KEY".to_string()));
     }
 
     // ── Literal diff tests ──────────────────────────────────────────
@@ -423,8 +495,8 @@ mod property_tests {
             return TestResult::discard();
         }
 
-        let diff_ab = semantic_diff(&file_a, &file_b);
-        let diff_ba = semantic_diff(&file_b, &file_a);
+        let diff_ab = semantic_diff(&file_a, &file_b, &DiffOptions::default());
+        let diff_ba = semantic_diff(&file_b, &file_a, &DiffOptions::default());
 
         // missing_in_file2 for A→B  ==  missing_in_file1 for B→A (by keys)
         let missing_ab_keys: std::collections::HashSet<_> =
@@ -513,7 +585,7 @@ mod property_tests {
 
             let start = std::time::Instant::now();
             for _ in 0..10 {
-                let _ = semantic_diff(&file1, &file2);
+                let _ = semantic_diff(&file1, &file2, &DiffOptions::default());
             }
             let elapsed = start.elapsed();
             times.push(elapsed.as_nanos() as f64);

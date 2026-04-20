@@ -9,14 +9,15 @@
 //! ## Quick Start
 //!
 //! ```rust
-//! use qaren_core::{parse_content, semantic_diff, ParseOptions};
+//! use qaren_core::{parse_content, semantic_diff, ParseOptions, DiffOptions};
 //! use std::path::Path;
 //!
 //! let opts = ParseOptions::default();
+//! let diff_opts = DiffOptions::default();
 //! let file1 = parse_content("KEY=value1\nDB=postgres", Path::new("a.env"), &opts).unwrap();
 //! let file2 = parse_content("KEY=value2\nNEW=added", Path::new("b.env"), &opts).unwrap();
 //!
-//! let diff = semantic_diff(&file1, &file2);
+//! let diff = semantic_diff(&file1, &file2, &diff_opts);
 //! assert!(!diff.is_identical());
 //! ```
 //!
@@ -39,9 +40,9 @@ pub mod types;
 
 pub use diff::{literal_diff, semantic_diff};
 pub use error::{QarenError, QarenResult};
-pub use parser::{parse_content, parse_file};
+pub use parser::{detect_delimiter, parse_content, parse_file};
 pub use patch::generate_patch;
 pub use types::{
-    ConfigFile, DiffLine, DiffResult, KvPair, LiteralDiffResult, ModifiedPair, ParseOptions,
-    PatchDirection,
+    ConfigFile, DiffLine, DiffOptions, DiffResult, KvPair, LiteralDiffResult, ModifiedPair,
+    ParseOptions, PatchDirection,
 };

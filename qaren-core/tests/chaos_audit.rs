@@ -559,7 +559,7 @@ mod diff_chaos {
     #[test]
     fn test_self_diff_is_identical() {
         let file = make_config(&[("A", "1"), ("B", "2"), ("C", "3")]);
-        let result = semantic_diff(&file, &file);
+        let result = semantic_diff(&file, &file, &DiffOptions::default());
         assert!(result.is_identical());
         assert_eq!(result.difference_count(), 0);
     }
@@ -570,7 +570,7 @@ mod diff_chaos {
     fn test_diff_empty_vs_empty_value() {
         let file1 = make_config(&[("KEY", "")]);
         let file2 = make_config(&[("KEY", "")]);
-        let result = semantic_diff(&file1, &file2);
+        let result = semantic_diff(&file1, &file2, &DiffOptions::default());
         assert!(result.is_identical());
     }
 
@@ -578,7 +578,7 @@ mod diff_chaos {
     fn test_diff_empty_vs_nonempty_value() {
         let file1 = make_config(&[("KEY", "")]);
         let file2 = make_config(&[("KEY", "something")]);
-        let result = semantic_diff(&file1, &file2);
+        let result = semantic_diff(&file1, &file2, &DiffOptions::default());
         assert_eq!(result.modified.len(), 1);
     }
 
@@ -615,7 +615,7 @@ mod diff_chaos {
         };
 
         let start = std::time::Instant::now();
-        let result = semantic_diff(&file1, &file2);
+        let result = semantic_diff(&file1, &file2, &DiffOptions::default());
         let elapsed = start.elapsed();
 
         assert_eq!(result.modified.len(), 10_000);
@@ -633,7 +633,7 @@ mod diff_chaos {
     fn test_diff_trailing_whitespace_matters() {
         let file1 = make_config(&[("KEY", "value ")]);
         let file2 = make_config(&[("KEY", "value")]);
-        let result = semantic_diff(&file1, &file2);
+        let result = semantic_diff(&file1, &file2, &DiffOptions::default());
         // Parser trims values, so these SHOULD be identical after parsing
         // But since we're using make_config directly, trim doesn't apply
         assert_eq!(result.modified.len(), 1);
@@ -926,7 +926,7 @@ mod e2e_attack_scenarios {
         let config1 = parse_content(prod, Path::new("prod.env"), &opts).expect("parse prod");
         let config2 = parse_content(staging, Path::new("staging.env"), &opts).expect("parse staging");
 
-        let result = semantic_diff(&config1, &config2);
+        let result = semantic_diff(&config1, &config2, &DiffOptions::default());
 
         // FEATURE_NEW only in prod → missing in file2
         assert!(
@@ -999,7 +999,7 @@ mod zero_panic {
         assert!(empty.pairs.is_empty());
 
         // Diff two empty files
-        let result = semantic_diff(&empty, &empty);
+        let result = semantic_diff(&empty, &empty, &DiffOptions::default());
         assert!(result.is_identical());
 
         // Literal diff of empty strings
