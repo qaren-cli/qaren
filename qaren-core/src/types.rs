@@ -26,6 +26,8 @@ pub struct ConfigFile {
     pub pairs: HashMap<String, (String, usize)>,
     /// Original file path (for error messages)
     pub file_path: PathBuf,
+    /// Non-fatal warnings encountered during parsing (e.g. duplicate keys)
+    pub warnings: Vec<String>,
 }
 
 /// Parsing configuration options.

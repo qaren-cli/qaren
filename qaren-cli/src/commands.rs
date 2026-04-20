@@ -95,6 +95,18 @@ pub enum Commands {
         file1: PathBuf,
         /// Second file to compare
         file2: PathBuf,
+
+        /// Compare lines case-insensitively  [short: -i]
+        #[arg(short = 'i', long)]
+        ignore_case: bool,
+
+        /// Ignore whitespace differences  [short: -w]
+        #[arg(short = 'w', long)]
+        ignore_whitespace: bool,
+
+        /// Print summary only  [short: -q]
+        #[arg(short = 'q', long)]
+        brief: bool,
     },
 
     /// Perform semantic key-value comparison [alias: kvp]

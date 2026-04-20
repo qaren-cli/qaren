@@ -85,6 +85,8 @@ pub fn parse_content(
     // Strip UTF-8 BOM if present (Finding 7: Windows editors add BOM)
     let content = content.strip_prefix('\u{FEFF}').unwrap_or(content);
     let mut pairs = HashMap::new();
+    let mut warnings = Vec::new();
+    let file_label = file_path.file_name().and_then(|n| n.to_str()).unwrap_or("file");
 
     for (line_idx, line) in content.lines().enumerate() {
         let line_number = line_idx + 1; // 1-indexed for user display
@@ -96,6 +98,9 @@ pub fn parse_content(
 
         // Parse key-value pair; malformed lines are silently skipped
         if let Some((key, value)) = parse_line(line, options) {
+            if let Some((_, old_line)) = pairs.get(&key) {
+                warnings.push(format!("duplicate key '{}' detected in {} (overwriting line {} with line {})", key, file_label, old_line, line_number));
+            }
             pairs.insert(key, (value, line_number));
         }
     }
@@ -103,6 +108,7 @@ pub fn parse_content(
     Ok(ConfigFile {
         pairs,
         file_path: file_path.to_path_buf(),
+        warnings,
     })
 }
 

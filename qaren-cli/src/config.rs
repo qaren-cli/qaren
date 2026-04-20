@@ -104,7 +104,7 @@ fn save_config(cfg: &QarenConfig) -> Result<(), io::Error> {
     writeln!(file, "# Qaren configuration")?;
     writeln!(file, "# exit_nonzero_on_diff: true = exit 1 when diffs found (like POSIX diff)")?;
     writeln!(file, "exit_nonzero_on_diff={}", cfg.exit_nonzero_on_diff)?;
-    writeln!(file, "")?;
+    writeln!(file)?;
     writeln!(file, "# color: false = disable ANSI color output")?;
     writeln!(file, "color={}", cfg.color)?;
     Ok(())

@@ -462,3 +462,58 @@ fn test_config_color_show() {
         .code(0)
         .stdout(predicate::str::contains("color output"));
 }
+
+// --- Task 7 Regression Tests --------------------------------------
+
+#[test]
+fn test_duplicate_key_warning_printed() {
+    let tmp = TempDir::new().unwrap();
+    let f1 = create_temp_file(&tmp, "a.env", "DEBUG_MODE=false\nPORT=8080\nDEBUG_MODE=true\n");
+    let f2 = create_temp_file(&tmp, "b.env", "DEBUG_MODE=false\nPORT=8080\nDEBUG_MODE=true\n");
+
+    qaren_cmd()
+        .args(["kv", &f1.display().to_string(), &f2.display().to_string()])
+        .assert()
+        .code(0)
+        .stderr(predicate::str::contains("Warning").and(predicate::str::contains("duplicate key 'DEBUG_MODE'")));
+}
+
+#[test]
+fn test_diff_literal_ignore_case() {
+    let tmp = TempDir::new().unwrap();
+    let f1 = create_temp_file(&tmp, "a.txt", "HELLO\n");
+    let f2 = create_temp_file(&tmp, "b.txt", "hello\n");
+
+    qaren_cmd()
+        .args(["diff", &f1.display().to_string(), &f2.display().to_string(), "-i"])
+        .assert()
+        .code(0)
+        .stdout(predicate::str::contains("identical"));
+}
+
+#[test]
+fn test_diff_literal_ignore_whitespace() {
+    let tmp = TempDir::new().unwrap();
+    let f1 = create_temp_file(&tmp, "a.txt", "PORT= 8080\n");
+    let f2 = create_temp_file(&tmp, "b.txt", "PORT=8080 \n");
+
+    qaren_cmd()
+        .args(["diff", &f1.display().to_string(), &f2.display().to_string(), "-w"])
+        .assert()
+        .code(0)
+        .stdout(predicate::str::contains("identical"));
+}
+
+#[test]
+fn test_diff_literal_brief_mode() {
+    let tmp = TempDir::new().unwrap();
+    let f1 = create_temp_file(&tmp, "a.txt", "line1\n");
+    let f2 = create_temp_file(&tmp, "b.txt", "line2\n");
+
+    qaren_cmd()
+        .args(["diff", &f1.display().to_string(), &f2.display().to_string(), "-q"])
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains("Summary"))
+        .stdout(predicate::str::contains("additions"));
+}

@@ -550,7 +550,7 @@ mod diff_chaos {
         }
         ConfigFile {
             pairs: map,
-            file_path: PathBuf::from("test.env"),
+            file_path: PathBuf::from("test.env"), warnings: vec![],
         }
     }
 
@@ -600,7 +600,7 @@ mod diff_chaos {
             }
             ConfigFile {
                 pairs: map,
-                file_path: PathBuf::from("a.env"),
+                file_path: PathBuf::from("a.env"), warnings: vec![],
             }
         };
         let file2 = {
@@ -610,7 +610,7 @@ mod diff_chaos {
             }
             ConfigFile {
                 pairs: map,
-                file_path: PathBuf::from("b.env"),
+                file_path: PathBuf::from("b.env"), warnings: vec![],
             }
         };
 
@@ -651,13 +651,13 @@ mod diff_chaos {
             .map(|i| format!("new_line_{}", i))
             .collect::<Vec<_>>()
             .join("\n");
-        let result = literal_diff(&content1, &content2);
+        let result = literal_diff(&content1, &content2, &DiffOptions::default());
         assert!(!result.additions.is_empty() || !result.deletions.is_empty());
     }
 
     #[test]
     fn test_literal_diff_single_char_change() {
-        let result = literal_diff("aaaa\n", "aaab\n");
+        let result = literal_diff("aaaa\n", "aaab\n", &DiffOptions::default());
         assert!(!result.additions.is_empty() || !result.deletions.is_empty());
     }
 }
@@ -1003,7 +1003,7 @@ mod zero_panic {
         assert!(result.is_identical());
 
         // Literal diff of empty strings
-        let lit = literal_diff("", "");
+        let lit = literal_diff("", "", &DiffOptions::default());
         assert!(lit.additions.is_empty());
         assert!(lit.deletions.is_empty());
     }
@@ -1099,3 +1099,4 @@ mod comment_stripping_security {
         );
     }
 }
+

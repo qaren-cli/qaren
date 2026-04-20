@@ -12,14 +12,11 @@ use crate::types::{
 };
 use similar::{ChangeTag, TextDiff};
 
-/// Normalise a value string for comparison purposes according to `DiffOptions`.
-///
-/// Only used for **equality checking** — the original strings are always
-/// stored in the result so display / patch generation is unaffected.
+/// Normalise a value (or key) string for comparison purposes according to `DiffOptions`.
 #[inline]
 fn normalise(value: &str, opts: &DiffOptions) -> String {
     let s = if opts.ignore_whitespace {
-        value.split_whitespace().collect::<Vec<_>>().join(" ")
+        value.chars().filter(|c| !c.is_whitespace()).collect()
     } else {
         value.to_string()
     };
@@ -31,34 +28,33 @@ fn normalise(value: &str, opts: &DiffOptions) -> String {
 }
 
 /// Perform semantic key-value comparison between two configuration files.
-///
-/// This is an order-agnostic comparison that categorizes keys into four groups:
-/// - **missing_in_file2**: keys in file1 not present in file2
-/// - **missing_in_file1**: keys in file2 not present in file1
-/// - **modified**: keys in both files with different values
-/// - **identical**: keys in both files with the same value
-///
-/// Pass [`DiffOptions::default()`] for standard exact-match behaviour.
-///
-/// # Complexity
-///
-/// - **Time**: O(n + m) where n and m are the number of pairs in each file
-/// - **Space**: O(n + m) for storing results
 pub fn semantic_diff(file1: &ConfigFile, file2: &ConfigFile, opts: &DiffOptions) -> DiffResult {
     let mut missing_in_file2 = Vec::new();
     let mut missing_in_file1 = Vec::new();
     let mut modified = Vec::new();
     let mut identical = Vec::new();
 
+    // Map lowercase key to original key in file2
+    let lookup_file2: std::collections::HashMap<String, &String> = file2.pairs.keys()
+        .map(|k| (if opts.ignore_case { k.to_lowercase() } else { k.clone() }, k))
+        .collect();
+
     // Check all keys in file1 against file2
-    for (key, (value1, line_num1)) in &file1.pairs {
-        match file2.pairs.get(key) {
-            Some((value2, line_num2)) => {
+    for (key1, (value1, line_num1)) in &file1.pairs {
+        let search_key = if opts.ignore_case { key1.to_lowercase() } else { key1.clone() };
+        
+        // Lookup matching key in file2
+        let file2_entry = lookup_file2.get(&search_key)
+            .and_then(|&k2| file2.pairs.get(k2).map(|v| (k2, v)));
+
+        match file2_entry {
+            Some((_key2, (value2, line_num2))) => {
                 if normalise(value1, opts) == normalise(value2, opts) {
-                    identical.push(key.clone());
+                    // Use the key from file1 as the base output key
+                    identical.push(key1.clone());
                 } else {
                     modified.push(ModifiedPair {
-                        key: key.clone(),
+                        key: key1.clone(),
                         value_file1: value1.clone(),
                         value_file2: value2.clone(),
                         line_number_file1: *line_num1,
@@ -68,7 +64,7 @@ pub fn semantic_diff(file1: &ConfigFile, file2: &ConfigFile, opts: &DiffOptions)
             }
             None => {
                 missing_in_file2.push(KvPair {
-                    key: key.clone(),
+                    key: key1.clone(),
                     value: value1.clone(),
                     line_number: *line_num1,
                 });
@@ -76,11 +72,17 @@ pub fn semantic_diff(file1: &ConfigFile, file2: &ConfigFile, opts: &DiffOptions)
         }
     }
 
+    // Map lowercase key to original key in file1
+    let lookup_file1: std::collections::HashMap<String, &String> = file1.pairs.keys()
+        .map(|k| (if opts.ignore_case { k.to_lowercase() } else { k.clone() }, k))
+        .collect();
+
     // Check for keys in file2 that are not in file1
-    for (key, (value2, line_num2)) in &file2.pairs {
-        if !file1.pairs.contains_key(key) {
+    for (key2, (value2, line_num2)) in &file2.pairs {
+        let search_key = if opts.ignore_case { key2.to_lowercase() } else { key2.clone() };
+        if !lookup_file1.contains_key(&search_key) {
             missing_in_file1.push(KvPair {
-                key: key.clone(),
+                key: key2.clone(),
                 value: value2.clone(),
                 line_number: *line_num2,
             });
@@ -100,8 +102,20 @@ pub fn semantic_diff(file1: &ConfigFile, file2: &ConfigFile, opts: &DiffOptions)
 /// Uses the Myers diff algorithm (via the `similar` crate) to detect
 /// additions, deletions, and unchanged lines. Line numbers are tracked
 /// separately for old and new content.
-pub fn literal_diff(content1: &str, content2: &str) -> LiteralDiffResult {
-    let diff = TextDiff::from_lines(content1, content2);
+pub fn literal_diff(content1: &str, content2: &str, opts: &DiffOptions) -> LiteralDiffResult {
+    let lines1: Vec<&str> = content1.lines().collect();
+    let lines2: Vec<&str> = content2.lines().collect();
+
+    let (text1, text2) = if !opts.ignore_case && !opts.ignore_whitespace {
+        (content1.to_string(), content2.to_string())
+    } else {
+        (
+            lines1.iter().map(|&l| normalise(l, opts)).collect::<Vec<_>>().join("\n") + "\n",
+            lines2.iter().map(|&l| normalise(l, opts)).collect::<Vec<_>>().join("\n") + "\n",
+        )
+    };
+
+    let diff = TextDiff::from_lines(&text1, &text2);
 
     let mut additions = Vec::new();
     let mut deletions = Vec::new();
@@ -111,17 +125,23 @@ pub fn literal_diff(content1: &str, content2: &str) -> LiteralDiffResult {
     let mut new_line_num: usize = 1;
 
     for change in diff.iter_all_changes() {
+        let orig_content = match change.tag() {
+            ChangeTag::Delete => lines1.get(old_line_num - 1).unwrap_or(&"").to_string(),
+            ChangeTag::Insert => lines2.get(new_line_num - 1).unwrap_or(&"").to_string(),
+            ChangeTag::Equal => lines1.get(old_line_num - 1).unwrap_or(&"").to_string(),
+        };
+
         match change.tag() {
             ChangeTag::Delete => {
                 deletions.push(DiffLine {
-                    content: change.value().to_string(),
+                    content: orig_content,
                     line_number: old_line_num,
                 });
                 old_line_num += 1;
             }
             ChangeTag::Insert => {
                 additions.push(DiffLine {
-                    content: change.value().to_string(),
+                    content: orig_content,
                     line_number: new_line_num,
                 });
                 new_line_num += 1;
@@ -160,7 +180,7 @@ mod tests {
         }
         ConfigFile {
             pairs: map,
-            file_path: PathBuf::from("test.env"),
+            file_path: PathBuf::from("test.env"), warnings: vec![],
         }
     }
 
@@ -357,14 +377,14 @@ mod tests {
 
     #[test]
     fn test_literal_identical() {
-        let result = literal_diff("line1\nline2\n", "line1\nline2\n");
+        let result = literal_diff("line1\nline2\n", "line1\nline2\n", &default_opts());
         assert!(result.additions.is_empty());
         assert!(result.deletions.is_empty());
     }
 
     #[test]
     fn test_literal_additions() {
-        let result = literal_diff("line1\n", "line1\nline2\n");
+        let result = literal_diff("line1\n", "line1\nline2\n", &default_opts());
         assert_eq!(result.additions.len(), 1);
         assert!(result.additions[0].content.contains("line2"));
         assert!(result.deletions.is_empty());
@@ -372,7 +392,7 @@ mod tests {
 
     #[test]
     fn test_literal_deletions() {
-        let result = literal_diff("line1\nline2\n", "line1\n");
+        let result = literal_diff("line1\nline2\n", "line1\n", &default_opts());
         assert!(result.additions.is_empty());
         assert_eq!(result.deletions.len(), 1);
         assert!(result.deletions[0].content.contains("line2"));
@@ -382,7 +402,7 @@ mod tests {
     fn test_literal_mixed_changes() {
         let content1 = "line1\nline2\nline3\n";
         let content2 = "line1\nmodified\nline3\nline4\n";
-        let result = literal_diff(content1, content2);
+        let result = literal_diff(content1, content2, &default_opts());
 
         // line2 deleted, "modified" and "line4" added
         assert!(!result.deletions.is_empty());
@@ -391,21 +411,21 @@ mod tests {
 
     #[test]
     fn test_literal_empty_files() {
-        let result = literal_diff("", "");
+        let result = literal_diff("", "", &default_opts());
         assert!(result.additions.is_empty());
         assert!(result.deletions.is_empty());
     }
 
     #[test]
     fn test_literal_empty_vs_content() {
-        let result = literal_diff("", "line1\nline2\n");
+        let result = literal_diff("", "line1\nline2\n", &default_opts());
         assert_eq!(result.additions.len(), 2);
         assert!(result.deletions.is_empty());
     }
 
     #[test]
     fn test_literal_tracks_line_numbers() {
-        let result = literal_diff("a\nb\n", "a\nc\n");
+        let result = literal_diff("a\nb\n", "a\nc\n", &default_opts());
         // 'b' deleted at line 2, 'c' added at line 2
         if !result.deletions.is_empty() {
             assert_eq!(result.deletions[0].line_number, 2);
@@ -475,7 +495,7 @@ mod property_tests {
         (
             ConfigFile {
                 pairs: map,
-                file_path: PathBuf::from("test.env"),
+                file_path: PathBuf::from("test.env"), warnings: vec![],
             },
             unique_pairs,
         )
@@ -572,7 +592,7 @@ mod property_tests {
             }
             ConfigFile {
                 pairs,
-                file_path: PathBuf::from("bench.env"),
+                file_path: PathBuf::from("bench.env"), warnings: vec![],
             }
         }
 

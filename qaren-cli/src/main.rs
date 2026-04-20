@@ -65,8 +65,8 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
     }
 
     match cli.command {
-        Commands::Diff { file1, file2 } => {
-            let identical = handle_diff_command(&file1, &file2)?;
+        Commands::Diff { file1, file2, ignore_case, ignore_whitespace, brief } => {
+            let identical = handle_diff_command(&file1, &file2, ignore_case, ignore_whitespace, brief)?;
             Ok((identical, cfg))
         }
         Commands::Kv {
@@ -115,18 +115,41 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
 // ─────────────────────────────────────────────────────────────────────
 
 /// Handle `qaren diff file1 file2` — literal line-by-line comparison.
-fn handle_diff_command(file1: &Path, file2: &Path) -> Result<bool, QarenError> {
+fn handle_diff_command(
+    file1: &Path,
+    file2: &Path,
+    ignore_case: bool,
+    ignore_whitespace: bool,
+    brief: bool,
+) -> Result<bool, QarenError> {
     let content1 = std::fs::read_to_string(file1)
         .map_err(|e| QarenError::from_io_with_path(e, file1.to_path_buf()))?;
     let content2 = std::fs::read_to_string(file2)
         .map_err(|e| QarenError::from_io_with_path(e, file2.to_path_buf()))?;
 
-    let result = literal_diff(&content1, &content2);
-    output::print_literal_diff(&result);
+    let opts = DiffOptions {
+        ignore_case,
+        ignore_whitespace,
+    };
+
+    let result = literal_diff(&content1, &content2, &opts);
 
     let identical = result.additions.is_empty()
         && result.deletions.is_empty()
         && result.modifications.is_empty();
+
+    if brief {
+        let l1 = file1.file_name().and_then(|n| n.to_str()).unwrap_or("file1");
+        let l2 = file2.file_name().and_then(|n| n.to_str()).unwrap_or("file2");
+        if identical {
+            println!("Summary: {} and {} are identical", l1, l2);
+        } else {
+            println!("Summary: {} and {} differ ({} additions, {} deletions, {} modifications)", 
+                l1, l2, result.additions.len(), result.deletions.len(), result.modifications.len());
+        }
+    } else {
+        output::print_literal_diff(&result);
+    }
 
     Ok(identical)
 }
@@ -199,6 +222,11 @@ fn handle_kv_command(
     // Parse both files using their respective options
     let config1 = parse_file(file1, &opts1)?;
     let config2 = parse_file(file2, &opts2)?;
+
+    use colored::Colorize;
+    for w in config1.warnings.iter().chain(config2.warnings.iter()) {
+        eprintln!("{}: {}", "⚠ Warning".yellow().bold(), w);
+    }
 
     // Build diff options
     let diff_opts = DiffOptions {

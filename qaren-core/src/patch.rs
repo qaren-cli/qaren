@@ -392,7 +392,7 @@ mod property_tests {
         }
         ConfigFile {
             pairs: map,
-            file_path: PathBuf::from("test.env"),
+            file_path: PathBuf::from("test.env"), warnings: vec![],
         }
     }
 
@@ -569,3 +569,4 @@ mod property_tests {
         TestResult::passed()
     }
 }
+

@@ -1,0 +1,129 @@
+############# TEST RESULTS ###################
+- prod files have one line added but tool failes
+PS D:\qaren> cargo run --bin qaren -- kvp  scratch\staging.env .\scratch\prod.env 
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.09s
+     Running `target\debug\qaren.exe kvp scratch\staging.env .\scratch\prod.env`
+✔ Files are identical
+PS D:\qaren> 
+
+files prod:
+DATABASE_URL=postgres://user:pass@db-prod:5432/main_db
+REDIS_URL=redis://cache-prod:6379/0
+API_KEY=sk_prod_12345
+LOG_LEVEL=error
+new_feature_flag=true
+DEBUG_MODE=false
+PORT=8080
+DEBUG_MODE=false
+file staging
+DATABASE_URL=postgres://user:pass@db-prod:5432/main_db
+REDIS_URL=redis://cache-prod:6379/0
+API_KEY=sk_prod_12345
+LOG_LEVEL=error
+new_feature_flag=true
+DEBUG_MODE=false
+PORT=8080
+---------------------------------------------
+- refine the output
+PS D:\qaren> cargo run --bin qaren -- kvp  -q scratch\staging.env .\scratch\prod.env  
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running `target\debug\qaren.exe kvp -q scratch\staging.env .\scratch\prod.env`
+
+Summary: 0 only in staging.env, 0 only in prod.env, 1 modified, 6 identical (use -v to show)
+error: process didn't exit successfully: `target\debug\qaren.exe kvp -q scratch\staging.env .\scratch\prod.env` (exit code: 1)
+PS D:\qaren>
+
+- the error mesage is annoying (error: process didn't exit successfully: `target\debug\qaren.exe kvp -q scratch\staging.env .\scratch\prod.env` (exit code: 1))
+- and we need to make sure that won't appear at prod ( Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.12s
+     Running `target\debug\qaren.exe kvp -q scratch\staging.env .\scratch\prod.env`)
+	 
+------------------------------------------------
+diff dosen't have option 
+PS D:\qaren> cargo run --bin qaren -- diff  -i scratch\staging.env .\scratch\prod.env  
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running `target\debug\qaren.exe diff -i scratch\staging.env .\scratch\prod.env`
+error: unexpected argument '-i' found
+
+  tip: to pass '-i' as a value, use '-- -i'
+
+Usage: qaren.exe diff <FILE1> <FILE2>
+
+For more information, try '--help'.
+error: process didn't exit successfully: `target\debug\qaren.exe diff -i scratch\staging.env .\scratch\prod.env` (exit code: 2)
+PS D:\qaren> cargo run --bin qaren -- diff  -q scratch\staging.env .\scratch\prod.env  
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.09s
+     Running `target\debug\qaren.exe diff -q scratch\staging.env .\scratch\prod.env`
+error: unexpected argument '-q' found
+
+  tip: to pass '-q' as a value, use '-- -q'
+
+Usage: qaren.exe diff <FILE1> <FILE2>
+
+For more information, try '--help'.
+error: process didn't exit successfully: `target\debug\qaren.exe diff -q scratch\staging.env .\scratch\prod.env` (exit code: 2)
+PS D:\qaren> 
+
+----------
+ambigous , how to enhance that see the below case 
+
+file prod:
+
+---------------
+Ignore cases dosn't work 
+
+PS D:\qaren> cargo run --bin qaren -- kv -i  scratch\staging.env .\scratch\prod.env   
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.09s
+     Running `target\debug\qaren.exe kv -i scratch\staging.env .\scratch\prod.env`
+
+── Only in staging.env (1 keys) ──
+  - new_feature_flag=true
+
+── Only in prod.env (1 keys) ──
+  + new_Feature_flag=true
+
+Summary: 1 only in staging.env, 1 only in prod.env, 0 modified, 6 identical (use -v to show)
+error: process didn't exit successfully: `target\debug\qaren.exe kv -i scratch\staging.env .\scratch\prod.env` (exit code: 1)
+
+----------------------------------
+white space 
+the case is 
+file prod 
+DATABASE_URL=postgres://user:pass@db-prod:5432/main_db
+REDIS_URL=redis://cache-prod:6379/0
+API_KEY=sk_prod_12345
+LOG_LEVEL=error
+new_feature_flag=true
+DEBUG_MODE=false
+PORT= 8080
+note the we have space before 8080
+staging file
+DATABASE_URL=postgres://user:pass@db-prod:5432/main_db
+REDIS_URL=redis://cache-prod:6379/0
+API_KEY=sk_prod_12345
+LOG_LEVEL=error
+new_feature_flag=true
+DEBUG_MODE=false
+PORT=8080
+
+the cmd 
+PS D:\qaren> cargo run --bin qaren -- kv  scratch\staging.env .\scratch\prod.env     
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.09s
+     Running `target\debug\qaren.exe kv scratch\staging.env .\scratch\prod.env`
+✔ Files are identical
+PS D:\qaren> 
+
+the app is unsensitive to before and after wite space and I think it dos'nt make sence so we impelemt -w option to ignore them if user need or what the best for this please 
+
+also option -w dosen't work 
+PS D:\qaren> cargo run --bin qaren -- kv  scratch\staging.env .\scratch\prod.env  -w
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running `target\debug\qaren.exe kv scratch\staging.env .\scratch\prod.env -w`
+
+── Modified (1 keys) ──
+  ~ DATABASE_URL: postgres://user:pass@db-prod:5432/main_db → post gres://user:pass@db-prod:5432/main_db
+
+Summary: 0 only in staging.env, 0 only in prod.env, 1 modified, 6 identical (use -v to show)
+error: process didn't exit successfully: `target\debug\qaren.exe kv scratch\staging.env .\scratch\prod.env -w` (exit code: 1)
+PS D:\qaren> 
+
+or what the best for -w ignoreing whitespaces before and after already exist and option and the app detact the intermedite whitespaces but -w dosen't ingonre so what is the best ? 
