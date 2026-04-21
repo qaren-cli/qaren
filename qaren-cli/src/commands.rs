@@ -40,59 +40,26 @@ pub struct SharedDiffOptions {
 #[command(version)]
 #[command(about = "Semantic and literal diffing for configuration files")]
 #[command(long_about = "\
-Qaren (قارن — Arabic for 'compare') is a blazingly fast configuration
-comparison tool built for DevOps engineers and system administrators.
+Qaren is the next generation of diff. A blazingly fast, multi-paradigm 
+configuration comparison tool built specially for DevOps engineers and 
+system administrators.
 
 It understands KEY=VALUE and KEY: VALUE formats natively, masks secrets
-automatically, generates patch files for missing keys, and integrates
-cleanly into CI/CD pipelines via standard exit codes.")]
+automatically (zero-trust by default), generates intelligent patch files,
+and integrates cleanly into CI/CD pipelines via POSIX-standard exit codes.")]
 #[command(after_help = "\
-EXAMPLES:
-  # Compare two .env files (auto-detects delimiter)
-  qaren kv prod.env staging.env
-
-  # Compare PM2 ecosystem.json exports (colon delimiter)
-  qaren kv ecosystem.prod.txt ecosystem.staging.txt -d ':'
-
-  # Cross-format comparison (prod uses '=', staging uses ':')
-  qaren kv prod.env staging.yaml --d1 '=' --d2 ':'
-
-  # Show differences only, hide identical keys (default)
-  qaren kv prod.env staging.env
-
-  # Show everything including identical keys
-  qaren kv prod.env staging.env --verbose
-
-  # Case-insensitive comparison
-  qaren kv prod.env staging.env -i
-
-  # Ignore whitespace differences in values
-  qaren kv prod.env staging.env -w
-
-  # Show secret values instead of masking them
-  qaren kv prod.env staging.env -S
-
-  # Generate a patch file with missing keys
-  qaren kv prod.env staging.env -g missing.env
-
-  # Generate bidirectional patch files
-  qaren kv prod.env staging.env -g sync.env --direction bidirectional
-
-  # Literal line-by-line diff
-  qaren diff file1.txt file2.txt
-
-  # View and toggle persistent settings
-  qaren config show
-  qaren config exit toggle   # toggle exit-1-on-diff behaviour
-  qaren config color toggle  # toggle ANSI colour output
-
 EXIT CODES:
   0   Files are identical (or pipeline-friendly mode enabled)
   1   Differences found (default POSIX diff behaviour)
   2   Error (file not found, permission denied, invalid arguments)
 
   Default behaviour: exit 1 on differences (POSIX standard).
-  Run 'qaren config exit toggle' to switch to pipeline-friendly mode (always exit 0).")]
+  Run 'qaren config exit toggle' to switch to pipeline-friendly mode (always exit 0).
+
+EXAMPLES:
+  To see rich, properly formatted use-cases and examples, run:
+  $ qaren --example
+")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Option<Commands>,
