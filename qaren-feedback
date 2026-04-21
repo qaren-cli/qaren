@@ -1,0 +1,43 @@
+[x] enhance --help command 
+[ ] multiple line keys
+[ ] masking db,redis,rabbit ...etc urls thats contains secrets 
+[ ] thinknig about defults behavior, using -s and -q each one must do diffrent job 
+[ ] make name of the source file red and target green 
+[ ] option to knock out specifc key or key which contain a specific word and -x to ignore specifc key
+[ ] -q no output 
+[ ] -s in-case diffrent Summary: 88 only in 3baq-stg.env, 8 only in 3baq-prod.env, 23 modified, 3 warning due duplicats key, 51 identical 
+in-case same with dublicat key make it instead the below output 
+aly@NEC:~/env-compare$ qaren kv 3baq-prod.env 3baq-prod.env -Qs
+⚠ Warning: duplicate key 'REDIS_PORT' detected in 3baq-prod.env (overwriting line 6 with line 71)
+⚠ Warning: duplicate key 'NODE_ENV' detected in 3baq-prod.env (overwriting line 47 with line 81)
+⚠ Warning: duplicate key 'PORT' detected in 3baq-prod.env (overwriting line 5 with line 82)
+⚠ Warning: duplicate key 'REDIS_PORT' detected in 3baq-prod.env (overwriting line 6 with line 71)
+⚠ Warning: duplicate key 'NODE_ENV' detected in 3baq-prod.env (overwriting line 47 with line 81)
+⚠ Warning: duplicate key 'PORT' detected in 3baq-prod.env (overwriting line 5 with line 82)
+Files 3baq-prod.env and 3baq-prod.env are identical
+aly@NEC:~/env-compare$ 
+as we use s the output must be less than attached like taht 
+⚠ 3baq-prod.env: 3 duplicate keys detected (auto-overwritten).
+⚠ 3baq-prod.env: 3 duplicate keys detected (auto-overwritten).
+
+✔ Files are identical.
+
+[ ] qaren kv 3baq-prod.env 3baq-prod.env -qv (Mutually Exclusive) 
+[ ] enhance -v when identical for example 
+[INFO] Parsing file1: 3baq-prod.env (Found 85 lines, 42 keys)
+[INFO] Parsing file2: 3baq-prod.env (Found 85 lines, 42 keys)
+
+⚠ Detailed Warnings:
+  - File 1: duplicate key 'REDIS_PORT' (overwriting line 6 with line 71)
+  - File 1: duplicate key 'NODE_ENV' (overwriting line 47 with line 81)
+  - File 2: duplicate key 'REDIS_PORT' (overwriting line 6 with line 71)
+  ...
+
+✔ Files are 100% structurally and semantically identical.
+
+[ ] Mutually Exclusive : -qs | -qv | -d or --d1 --d2 
+[ ] add --output -o json for autmation {"missing": ["API_KEY"], "modified": {"PORT": {"old": 80, "new": 8080}}}
+[ ] --strict to ensure all key mapped 
+[ ] support .qarenignore that included keys 
+[ ] global config has pager , color 
+[ ] Custom Secret Dictionary | like custom_secrets = ["DSN", "CONNECTION_STRING", "PEM"] | mask_style = "full" | "partial"

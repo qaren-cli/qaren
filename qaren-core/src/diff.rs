@@ -40,11 +40,14 @@ pub fn semantic_diff(file1: &ConfigFile, file2: &ConfigFile, opts: &DiffOptions)
 
     // Map lowercase key to original key in file2
     let lookup_file2: std::collections::HashMap<String, &String> = file2.pairs.keys()
+        .filter(|k| !opts.is_ignored(k))
         .map(|k| (if opts.ignore_case { k.to_lowercase() } else { k.clone() }, k))
         .collect();
 
     // Check all keys in file1 against file2
     for (key1, (value1, line_num1)) in &file1.pairs {
+        if opts.is_ignored(key1) { continue; }
+        
         let search_key = if opts.ignore_case { key1.to_lowercase() } else { key1.clone() };
         
         // Lookup matching key in file2
@@ -78,11 +81,13 @@ pub fn semantic_diff(file1: &ConfigFile, file2: &ConfigFile, opts: &DiffOptions)
 
     // Map lowercase key to original key in file1
     let lookup_file1: std::collections::HashMap<String, &String> = file1.pairs.keys()
+        .filter(|k| !opts.is_ignored(k))
         .map(|k| (if opts.ignore_case { k.to_lowercase() } else { k.clone() }, k))
         .collect();
 
     // Check for keys in file2 that are not in file1
     for (key2, (value2, line_num2)) in &file2.pairs {
+        if opts.is_ignored(key2) { continue; }
         let search_key = if opts.ignore_case { key2.to_lowercase() } else { key2.clone() };
         if !lookup_file1.contains_key(&search_key) {
             missing_in_file1.push(KvPair {
@@ -381,6 +386,46 @@ mod tests {
         // Identical — but we verify normalise() didn't mutate stored values
         assert!(result.modified.is_empty());
         assert!(result.identical.contains(&"KEY".to_string()));
+    }
+
+    #[test]
+    fn test_ignore_keys_skips_missing_and_modified() {
+        let file1 = make_config(&[("KEY1", "v1"), ("KEY2", "v2"), ("KEY3", "v3")]);
+        let file2 = make_config(&[("KEY1", "v1_mod"), ("KEY3", "v3"), ("KEY4", "v4")]);
+        
+        let mut opts = DiffOptions::default();
+        opts.ignore_keys = vec!["KEY1".to_string(), "KEY2".to_string(), "KEY4".to_string()];
+        
+        let result = semantic_diff(&file1, &file2, &opts);
+        
+        // KEY1 is modified, but ignored.
+        // KEY2 is missing in file2, but ignored.
+        // KEY4 is missing in file1, but ignored.
+        // Only KEY3 remains, and it's identical.
+        assert!(result.modified.is_empty());
+        assert!(result.missing_in_file1.is_empty());
+        assert!(result.missing_in_file2.is_empty());
+        assert_eq!(result.identical.len(), 1);
+        assert_eq!(result.identical[0], "KEY3");
+        assert!(result.is_identical());
+    }
+
+    #[test]
+    fn test_ignore_keywords_case_insensitive_skips() {
+        let file1 = make_config(&[("GITHUB_TOKEN", "123"), ("HOST", "localhost")]);
+        let file2 = make_config(&[("github_url", "http"), ("HOST", "127.0.0.1")]);
+        
+        let mut opts = DiffOptions::default();
+        opts.ignore_keywords = vec!["github".to_string()];
+        
+        let result = semantic_diff(&file1, &file2, &opts);
+        
+        // GITHUB_TOKEN and github_url should be ignored.
+        // HOST is modified and should be detected.
+        assert_eq!(result.modified.len(), 1);
+        assert_eq!(result.modified[0].key, "HOST");
+        assert!(result.missing_in_file1.is_empty());
+        assert!(result.missing_in_file2.is_empty());
     }
 
     // ── Literal diff tests ──────────────────────────────────────────

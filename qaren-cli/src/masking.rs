@@ -14,7 +14,8 @@ const SECRET_KEYWORDS: &[&str] = &[
     "key", "password", "secret", "token", "auth",
     // Defense-in-depth additions (chaos audit Finding 4)
     "credential", "cert", "private", "signing",
-    "connection_string", "conn_str",
+    // Infrastructure and DB connection strings (v0.1 feedback)
+    "connection_string", "conn_str", "url", "dsn", "redis", "rabbit", "amqp", "postgres", "mongo", "db"
 ];
 
 /// Check if a key should have its value masked.
@@ -91,11 +92,11 @@ mod tests {
 
     #[test]
     fn test_no_mask_for_safe_keys() {
-        assert!(!should_mask("DATABASE_HOST"));
         assert!(!should_mask("PORT"));
         assert!(!should_mask("APP_NAME"));
         assert!(!should_mask("LOG_LEVEL"));
-        assert!(!should_mask("REDIS_URL"));
+        assert!(!should_mask("DEBUG"));
+        assert!(!should_mask("TIMEOUT"));
     }
 
     // ── Finding 4: expanded keyword coverage ────────────────────────
@@ -130,6 +131,16 @@ mod tests {
         assert!(should_mask("DB_CONN_STR"));
     }
 
+    #[test]
+    fn test_mask_infrastructure_keywords() {
+        assert!(should_mask("DATABASE_URL"));
+        assert!(should_mask("REDIS_HOST"));
+        assert!(should_mask("MONGODB_URI"));
+        assert!(should_mask("RABBITMQ_URL"));
+        assert!(should_mask("POSTGRES_DB"));
+        assert!(should_mask("AMQP_DSN"));
+    }
+
     // ── mask_value tests ────────────────────────────────────────────
 
     #[test]
@@ -151,8 +162,8 @@ mod tests {
     #[test]
     fn test_mask_value_safe_key_not_masked() {
         assert_eq!(
-            mask_value("DATABASE_HOST", "localhost", false),
-            "localhost"
+            mask_value("LOG_LEVEL", "info", false),
+            "info"
         );
     }
 }

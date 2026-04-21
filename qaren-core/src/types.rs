@@ -18,6 +18,15 @@ pub struct KvPair {
     pub line_number: usize,
 }
 
+/// Represents a warning encountered during parsing.
+#[derive(Debug, Clone)]
+pub struct ParseWarning {
+    /// The key associated with the warning (if any)
+    pub key: Option<String>,
+    /// The formatted warning message
+    pub message: String,
+}
+
 /// Represents a parsed configuration file as a HashMap for O(1) lookups.
 #[derive(Debug, Clone)]
 pub struct ConfigFile {
@@ -27,7 +36,7 @@ pub struct ConfigFile {
     /// Original file path (for error messages)
     pub file_path: PathBuf,
     /// Non-fatal warnings encountered during parsing (e.g. duplicate keys)
-    pub warnings: Vec<String>,
+    pub warnings: Vec<ParseWarning>,
 }
 
 /// Parsing configuration options.
@@ -106,6 +115,24 @@ pub struct DiffOptions {
 
     /// Ignore changes where lines are all blank (-B)
     pub ignore_blank_lines: bool,
+
+    /// Exact keys to completely ignore during semantic diff (-x)
+    pub ignore_keys: Vec<String>,
+
+    /// Substring keywords. Any key containing these will be ignored (--ignore-keyword)
+    pub ignore_keywords: Vec<String>,
+}
+
+impl DiffOptions {
+    /// Returns true if a key should be ignored based on ignore_keys or ignore_keywords.
+    pub fn is_ignored(&self, key: &str) -> bool {
+        self.ignore_keys.iter().any(|k| k == key) || {
+            let key_lower = key.to_lowercase();
+            self.ignore_keywords.iter().any(|kw| {
+                key_lower.contains(&kw.to_lowercase())
+            })
+        }
+    }
 }
 
 

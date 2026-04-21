@@ -10,14 +10,6 @@ use std::path::PathBuf;
 
 #[derive(clap::Args, Debug, Default, Clone)]
 pub struct SharedDiffOptions {
-    /// Report only when files differ
-    #[arg(short = 'q', long)]
-    pub brief: bool,
-
-    /// Report when two files are the same
-    #[arg(short = 's', long)]
-    pub report_identical_files: bool,
-
     /// Ignore case differences in file contents
     #[arg(short = 'i', long)]
     pub ignore_case: bool,
@@ -31,10 +23,10 @@ pub struct SharedDiffOptions {
 // Top-level CLI
 // ─────────────────────────────────────────────────────────────────────
 
-/// Qaren (قارن) — A blazingly fast configuration comparison tool.
+/// Qaren — The next generation of diff.
 ///
-/// Compare .env files, PM2 configs, YAML keys, and any key-value format
-/// with semantic awareness, secret masking, and Linux-native exit codes.
+/// A blazingly fast configuration comparison tool built specifically 
+/// for DevOps engineers and system administrators.
 #[derive(Parser)]
 #[command(name = "qaren")]
 #[command(version)]
@@ -56,8 +48,7 @@ EXIT CODES:
   Default behaviour: exit 1 on differences (POSIX standard).
   Run 'qaren config exit toggle' to switch to pipeline-friendly mode (always exit 0).
 
-EXAMPLES:
-  To see rich, properly formatted use-cases and examples, run:
+  To see rich examples and use-cases, run:
   $ qaren --example
 ")]
 pub struct Cli {
@@ -82,9 +73,9 @@ pub enum Commands {
     /// Useful for detecting formatting changes or non-KV config files.
     Diff {
         /// First file to compare
-        file1: PathBuf,
+        file1: Option<PathBuf>,
         /// Second file to compare
-        file2: PathBuf,
+        file2: Option<PathBuf>,
 
         /// Output unified diff  [short: -u]
         #[arg(short = 'u', long)]
@@ -102,6 +93,14 @@ pub enum Commands {
         #[arg(short = 'B', long)]
         ignore_blank_lines: bool,
 
+        /// Report only when files differ
+        #[arg(short = 'q', long)]
+        brief: bool,
+
+        /// Report when two files are the same
+        #[arg(short = 's', long)]
+        report_identical_files: bool,
+
         #[command(flatten)]
         shared: SharedDiffOptions,
     },
@@ -113,14 +112,14 @@ pub enum Commands {
     #[command(alias = "kvp")]
     Kv {
         /// First file to compare (source / reference)
-        file1: PathBuf,
+        file1: Option<PathBuf>,
         /// Second file to compare (target)
-        file2: PathBuf,
+        file2: Option<PathBuf>,
 
         /// Delimiter for BOTH files when they share the same format.
         /// Auto-detected if omitted. Use --d1/--d2 for cross-format comparisons.
         /// Examples: '=', ':', ' '
-        #[arg(short = 'd', long, value_name = "DELIMITER")]
+        #[arg(short = 'd', long, value_name = "DELIMITER", conflicts_with_all = ["d1", "d2"])]
         delimiter: Option<String>,
 
         /// Delimiter override for file1 only (overrides --delimiter for file1)
@@ -137,15 +136,33 @@ pub enum Commands {
 
         #[command(flatten)]
         shared: SharedDiffOptions,
+        /// Output format (text or json)
+        #[arg(short = 'o', long, default_value = "text", value_name = "FORMAT")]
+        output: String,
+
+        /// Ignore a specific key (exact match). Can be passed multiple times.  [short: -x]
+        #[arg(short = 'x', long = "ignore-key", value_name = "KEY")]
+        ignore_keys: Vec<String>,
+
+        /// Ignore keys containing this keyword (case-insensitive substring).
+        #[arg(long = "ignore-keyword", value_name = "KEYWORD")]
+        ignore_keywords: Vec<String>,
+
+        /// Quiet mode - no stdout/stderr output. Return exit code only.  [short: -q]
+        #[arg(short = 'q', long, conflicts_with_all = ["verbose", "summary"])]
+        quiet: bool,
+
+        /// Summary mode - minimize output, aggregate warnings  [short: -s]
+        #[arg(short = 's', long, conflicts_with_all = ["verbose", "quiet"])]
+        summary: bool,
 
         /// Show secret values in plain text (disables masking)  [short: -S]
         #[arg(short = 'S', long)]
         show_secrets: bool,
 
         /// Show identical keys in output as well (hidden by default)  [short: -v]
-        #[arg(short = 'v', long)]
+        #[arg(short = 'v', long, conflicts_with_all = ["quiet", "summary"])]
         verbose: bool,
-
         /// Generate a patch file with missing keys  [short: -g]
         #[arg(short = 'g', long, value_name = "FILE")]
         generate_missing: Option<PathBuf>,

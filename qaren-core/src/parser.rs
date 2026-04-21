@@ -12,7 +12,7 @@
 //! - **No `.unwrap()` / `.expect()`** — all code paths are panic-free.
 
 use crate::error::{QarenError, QarenResult};
-use crate::types::{ConfigFile, ParseOptions};
+use crate::types::{ConfigFile, ParseOptions, ParseWarning};
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -99,7 +99,11 @@ pub fn parse_content(
         // Parse key-value pair; malformed lines are silently skipped
         if let Some((key, value)) = parse_line(line, options) {
             if let Some((_, old_line)) = pairs.get(&key) {
-                warnings.push(format!("duplicate key '{}' detected in {} (overwriting line {} with line {})", key, file_label, old_line, line_number));
+                let msg = format!("duplicate key '{}' detected in {} (overwriting line {} with line {})", key, file_label, old_line, line_number);
+                warnings.push(ParseWarning {
+                    key: Some(key.clone()),
+                    message: msg,
+                });
             }
             pairs.insert(key, (value, line_number));
         }

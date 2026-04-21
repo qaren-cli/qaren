@@ -291,10 +291,9 @@ fn test_kv_ignore_whitespace() {
         .stdout(predicate::str::is_empty());
 }
 
-// ─── kv: Brief mode ───────────────────────────────────────────────
-
+// ─── kv: Quiet mode ───────────────────────────────────────────────
 #[test]
-fn test_kv_brief_mode() {
+fn test_kv_quiet_mode() {
     let tmp = TempDir::new().unwrap();
     let f1 = create_temp_file(&tmp, "a.env", "A=1\nB=2\n");
     let f2 = create_temp_file(&tmp, "b.env", "A=1\n");
@@ -303,9 +302,68 @@ fn test_kv_brief_mode() {
         .args(["kv", &f1.display().to_string(), &f2.display().to_string(), "-q"])
         .assert()
         .code(1)
-        // Brief mode should show Summary but NOT per-key details
-        .stdout(predicate::str::contains("differ"))
+        .stdout(predicate::str::is_empty());
+}
+
+// ─── kv: Summary mode ─────────────────────────────────────────────
+#[test]
+fn test_kv_summary_mode() {
+    let tmp = TempDir::new().unwrap();
+    let f1 = create_temp_file(&tmp, "a.env", "A=1\nB=2\n");
+    let f2 = create_temp_file(&tmp, "b.env", "A=1\n");
+
+    qaren_cmd()
+        .args(["kv", &f1.display().to_string(), &f2.display().to_string(), "-s"])
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains("Summary:"))
         .stdout(predicate::str::contains("Only in").not());
+}
+
+// ─── kv: Ignore keys and keywords ─────────────────────────────────
+#[test]
+fn test_kv_ignore_keys() {
+    let tmp = TempDir::new().unwrap();
+    let f1 = create_temp_file(&tmp, "a.env", "A=1\nB=2\nSECRET=123\n");
+    let f2 = create_temp_file(&tmp, "b.env", "A=1\nB=3\n");
+
+    // Ignore B (modified) and SECRET (only in a.env)
+    qaren_cmd()
+        .args(["kv", &f1.display().to_string(), &f2.display().to_string(), "-x", "B", "-x", "SECRET"])
+        .assert()
+        .code(0) // Should be identical after ignoring
+        .stdout(predicate::str::is_empty());
+}
+
+#[test]
+fn test_kv_ignore_keywords() {
+    let tmp = TempDir::new().unwrap();
+    let f1 = create_temp_file(&tmp, "a.env", "DB_URL=postgres\nAPP_NAME=my-app\n");
+    let f2 = create_temp_file(&tmp, "b.env", "DB_URL=mysql\nAPP_NAME=my-app\n");
+
+    // Ignore anything containing 'DB'
+    qaren_cmd()
+        .args(["kv", &f1.display().to_string(), &f2.display().to_string(), "--ignore-keyword", "DB"])
+        .assert()
+        .code(0)
+        .stdout(predicate::str::is_empty());
+}
+
+// ─── kv: JSON Output ──────────────────────────────────────────────
+#[test]
+fn test_kv_json_output() {
+    let tmp = TempDir::new().unwrap();
+    let f1 = create_temp_file(&tmp, "a.env", "A=1\nB=2\n");
+    let f2 = create_temp_file(&tmp, "b.env", "A=1\nB=3\n");
+
+    qaren_cmd()
+        .args(["kv", &f1.display().to_string(), &f2.display().to_string(), "--output", "json"])
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains("\"modified\""))
+        .stdout(predicate::str::contains("\"B\""))
+        .stdout(predicate::str::contains("\"old\": \"2\""))
+        .stdout(predicate::str::contains("\"new\": \"3\""));
 }
 
 // ─── kv: Patch generation ─────────────────────────────────────────

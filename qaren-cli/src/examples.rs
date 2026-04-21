@@ -8,16 +8,28 @@ pub fn print_examples(subcmd: Option<&str>) {
             println!("  {}\n", "Compare configurations intelligently (ignoring order and formatting differences).".bright_black());
             
             println!("    {} {} prod.env staging.env", "$".bright_black(), "qaren kv".green());
-            println!("    {}\n", "Compare two files showing only keys that differ or are missing.".bright_black());
+            println!("    {}\n", "Default behavior: compare two files showing only keys that differ or are missing.".bright_black());
+
+            println!("    {} {} prod.env staging.env -g patch.env", "$".bright_black(), "qaren kv".green());
+            println!("    {}\n", "Generate an intelligent patch file containing keys missing from prod.env.".bright_black());
+
+            println!("    {} {} app.env ci.env -x SECRET_KEY -x DB_PASSWORD", "$".bright_black(), "qaren kv".green());
+            println!("    {}\n", "Ignore specific sensitive or dynamic keys from the comparison.".bright_black());
+
+            println!("    {} {} build.env staging.env --ignore-keyword GITHUB", "$".bright_black(), "qaren kv".green());
+            println!("    {}\n", "Exclude all keys containing 'GITHUB' (case-insensitive substring match).".bright_black());
+
+            println!("    {} {} api.env local.env --output json", "$".bright_black(), "qaren kv".green());
+            println!("    {}\n", "Export comparison results in machine-readable JSON format for automation.".bright_black());
+
+            println!("    {} {} s1.env s2.env -s", "$".bright_black(), "qaren kv".green());
+            println!("    {}\n", "Summary mode: Aggregated warnings and compact diff headers (Red/Green).".bright_black());
+
+            println!("    {} {} p1.env p2.env -q", "$".bright_black(), "qaren kv".green());
+            println!("    {}\n", "Quiet mode: Absolute silence. Use for shell script conditionals (check exit code).".bright_black());
 
             println!("    {} {} prod.env staging.yaml --d2 ':'", "$".bright_black(), "qaren kv".green());
             println!("    {}\n", "Cross-format comparison (.env vs .yaml) using explicit delimiter logic.".bright_black());
-
-            println!("    {} {} prod.env staging.env -i -w", "$".bright_black(), "qaren kv".green());
-            println!("    {}\n", "Compare ignoring case (-i) and stripping all values of white spaces (-w).".bright_black());
-
-            println!("    {} {} prod.env staging.env -g missing.env", "$".bright_black(), "qaren kv".green());
-            println!("    {}\n", "Generate an intelligent patch file with all keys missing from prod.env.".bright_black());
             println!();
         }
         Some("diff") => {
@@ -31,21 +43,21 @@ pub fn print_examples(subcmd: Option<&str>) {
             println!("    {}\n", "Compare ignoring white space (-w), blank lines (-B), and case (-i).".bright_black());
 
             println!("    {} {} file1.txt file2.txt -q", "$".bright_black(), "qaren diff".green());
-            println!("    {}\n", "Brief output; only exit 1 and report if files differ, suppress all output.".bright_black());
+            println!("    {}\n", "Quiet mode: Suppress all output. Exit 0 if identical, 1 if different.".bright_black());
             println!();
         }
         _ => {
-            println!("\n  {} {} {}\n", "Qaren (قارن)".bold().magenta(), "—".bright_black(), "Blazingly fast configuration comparison tool.".bold().white());
+            println!("\n  {} {} {}\n", "Qaren".bold().magenta(), "—".bright_black(), "Blazingly fast configuration comparison tool.".bold().white());
             
             println!("  {}\n", "CORE EXAMPLES:".bold().cyan());
-            println!("    {} {} prod.env staging.env -g patch.env", "$".bright_black(), "qaren kv".green());
-            println!("    {}\n", "Compare two dot-env configurations and safely patch missing keys.".bright_black());
+            println!("    {} {} prod.env staging.env -x DYNAMIC_URL --output json", "$".bright_black(), "qaren kv".green());
+            println!("    {}\n", "Ignore non-static keys and pipe the results as JSON into other tools.".bright_black());
 
-            println!("    {} {} config1.ini config2.ini -u", "$".bright_black(), "qaren diff".green());
-            println!("    {}\n", "Compute literal unified diffs between typical structural files.".bright_black());
+            println!("    {} {} config.dev config.prod -s", "$".bright_black(), "qaren kv".green());
+            println!("    {}\n", "Get a high-level summary of configuration differences.".bright_black());
 
             println!("    {} {} exit toggle", "$".bright_black(), "qaren config".green());
-            println!("    {}\n", "Toggle pipeline-friendly exit codes automatically.".bright_black());
+            println!("    {}\n", "Toggle pipeline-friendly exit code behavior.".bright_black());
 
             println!("  {} {}\n  {}\n", "➔".bright_black(), "Want format-specific examples?".bold().cyan(), 
                      "Run `qaren <command> --example` (e.g. `qaren kv --example`)".bright_black());

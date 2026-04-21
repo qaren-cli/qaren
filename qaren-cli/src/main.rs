@@ -77,8 +77,19 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
     }
 
     match cli.command {
-        Some(Commands::Diff { file1, file2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, shared }) => {
-            let identical = handle_diff_command(&file1, &file2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, &shared)?;
+        Some(Commands::Diff { file1, file2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, brief, report_identical_files, shared }) => {
+            let (f1, f2) = match (file1, file2) {
+                (Some(f1), Some(f2)) => (f1, f2),
+                _ => {
+                    use clap::CommandFactory;
+                    let mut cmd = crate::commands::Cli::command();
+                    if let Some(sub) = cmd.find_subcommand_mut("diff") {
+                        sub.print_help().unwrap();
+                    }
+                    std::process::exit(2);
+                }
+            };
+            let identical = handle_diff_command(&f1, &f2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, brief, report_identical_files, &shared)?;
             Ok((identical, cfg))
         }
         Some(Commands::Kv {
@@ -89,19 +100,40 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
             d2,
             strip_quotes,
             shared,
+            output,
+            ignore_keys,
+            ignore_keywords,
+            quiet,
+            summary,
             show_secrets,
             verbose,
             generate_missing,
             direction,
         }) => {
+            let (f1, f2) = match (file1, file2) {
+                (Some(f1), Some(f2)) => (f1, f2),
+                _ => {
+                    use clap::CommandFactory;
+                    let mut cmd = crate::commands::Cli::command();
+                    if let Some(sub) = cmd.find_subcommand_mut("kv") {
+                        sub.print_help().unwrap();
+                    }
+                    std::process::exit(2);
+                }
+            };
             let identical = handle_kv_command(
-                &file1,
-                &file2,
+                &f1,
+                &f2,
                 delimiter.as_deref(),
                 d1.as_deref(),
                 d2.as_deref(),
                 strip_quotes,
                 &shared,
+                &output,
+                ignore_keys,
+                ignore_keywords,
+                quiet,
+                summary,
                 show_secrets,
                 verbose,
                 generate_missing.as_deref(),
@@ -129,6 +161,7 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
 // ─────────────────────────────────────────────────────────────────────
 
 /// Handle `qaren diff file1 file2` — literal line-by-line comparison.
+#[allow(clippy::too_many_arguments)]
 fn handle_diff_command(
     file1: &Path,
     file2: &Path,
@@ -136,6 +169,8 @@ fn handle_diff_command(
     ignore_space_change: bool,
     ignore_trailing_space: bool,
     ignore_blank_lines: bool,
+    brief: bool,
+    report_identical_files: bool,
     shared: &crate::commands::SharedDiffOptions,
 ) -> Result<bool, QarenError> {
     let content1 = std::fs::read_to_string(file1)
@@ -149,6 +184,8 @@ fn handle_diff_command(
         ignore_space_change,
         ignore_trailing_space,
         ignore_blank_lines,
+        ignore_keys: vec![],
+        ignore_keywords: vec![],
     };
 
     let result = literal_diff(&content1, &content2, &opts);
@@ -161,12 +198,12 @@ fn handle_diff_command(
     let l2 = file2.file_name().and_then(|n| n.to_str()).unwrap_or("file2");
 
     if identical {
-        if shared.report_identical_files {
+        if report_identical_files {
             println!("Files {} and {} are identical", l1, l2);
         }
         // POSIX diff stays silent if identical and -s is NOT provided
     } else {
-        if shared.brief {
+        if brief {
             println!("Files {} and {} differ", l1, l2);
         } else if unified {
             let diff = similar::TextDiff::from_lines(&content1, &content2);
@@ -218,6 +255,11 @@ fn handle_kv_command(
     d2: Option<&str>,
     strip_quotes: bool,
     shared: &crate::commands::SharedDiffOptions,
+    output_format: &str,
+    ignore_keys: Vec<String>,
+    ignore_keywords: Vec<String>,
+    quiet: bool,
+    summary: bool,
     show_secrets: bool,
     verbose: bool,
     generate_missing: Option<&Path>,
@@ -258,9 +300,9 @@ fn handle_kv_command(
     let config1 = parse_file(file1, &opts1)?;
     let config2 = parse_file(file2, &opts2)?;
 
-    use colored::Colorize;
-    for w in config1.warnings.iter().chain(config2.warnings.iter()) {
-        eprintln!("{}: {}", "⚠ Warning".yellow().bold(), w);
+    if verbose && !quiet {
+        println!("[INFO] Parsing file1: {} (Found {} keys)", file1.display(), config1.pairs.len());
+        println!("[INFO] Parsing file2: {} (Found {} keys)", file2.display(), config2.pairs.len());
     }
 
     // Build diff options
@@ -270,7 +312,30 @@ fn handle_kv_command(
         ignore_space_change: false,
         ignore_trailing_space: false,
         ignore_blank_lines: false,
+        ignore_keys,
+        ignore_keywords,
     };
+
+    if !quiet {
+        use colored::Colorize;
+        if summary {
+            let warn_count1 = config1.warnings.iter().filter(|w| w.key.as_ref().is_none_or(|k| !diff_opts.is_ignored(k))).count();
+            if warn_count1 > 0 {
+                eprintln!("{} {}: {} duplicate keys detected (auto-overwritten).", "⚠".yellow(), file1.display(), warn_count1);
+            }
+            let warn_count2 = config2.warnings.iter().filter(|w| w.key.as_ref().is_none_or(|k| !diff_opts.is_ignored(k))).count();
+            if warn_count2 > 0 {
+                eprintln!("{} {}: {} duplicate keys detected (auto-overwritten).", "⚠".yellow(), file2.display(), warn_count2);
+            }
+        } else {
+            for w in config1.warnings.iter().chain(config2.warnings.iter()) {
+                let should_show = w.key.as_ref().is_none_or(|k| !diff_opts.is_ignored(k));
+                if should_show {
+                    eprintln!("{}: {}", "⚠ Warning".yellow().bold(), w.message);
+                }
+            }
+        }
+    }
 
     // Perform semantic diff
     let diff_result = semantic_diff(&config1, &config2, &diff_opts);
@@ -288,23 +353,39 @@ fn handle_kv_command(
     let identical = diff_result.is_identical();
 
     // Print results
-    if identical {
-        if shared.report_identical_files {
-            println!("Files {} and {} are identical", label1, label2);
-        }
+    if quiet {
+        // Absolute silence for exit-code checking
+    } else if output_format == "json" {
+        output::print_json_diff(&diff_result, show_secrets);
     } else {
-        if shared.brief {
-            println!("Files {} and {} differ", label1, label2);
+        use colored::Colorize;
+        if identical {
+            if summary {
+                println!("✔ Files are identical.");
+            }
         } else {
-            output::print_diff_result(&diff_result, show_secrets, verbose, label1, label2);
+            if summary {
+                let l1 = label1.red();
+                let l2 = label2.green();
+                println!("\n── {} vs {} ──", l1, l2);
+                println!(
+                    "Summary: {} only in {}, {} only in {}, {} modified",
+                    diff_result.missing_in_file2.len(), label1.red(),
+                    diff_result.missing_in_file1.len(), label2.green(),
+                    diff_result.modified.len()
+                );
+                println!();
+            } else {
+                output::print_diff_result(&diff_result, show_secrets, verbose, label1, label2);
+            }
         }
-    }
-    // Annotate delimiter info when auto-detected and different
-    if d1.is_none() && d2.is_none() && delimiter.is_none() && delim1 != delim2 {
-        eprintln!(
-            "  ℹ auto-detected delimiters: '{}' for {}, '{}' for {}",
-            delim1, label1, delim2, label2
-        );
+
+        if !summary && d1.is_none() && d2.is_none() && delimiter.is_none() && delim1 != delim2 {
+            eprintln!(
+                "  ℹ auto-detected delimiters: '{}' for {}, '{}' for {}",
+                delim1, label1, delim2, label2
+            );
+        }
     }
 
     // Generate patch if requested
@@ -326,13 +407,14 @@ fn handle_kv_command(
 
         let created_files = generate_patch(&diff_result, output_path, &patch_opts1, &patch_opts2, patch_direction)?;
 
-        eprintln!();
-        eprintln!();
-        if created_files.is_empty() {
-            eprintln!("  ℹ No missing keys found. No patch file created.");
-        } else {
-            for path in &created_files {
-                eprintln!("✔ Patch file created: {}", path.display());
+        if !quiet {
+            eprintln!();
+            if created_files.is_empty() {
+                eprintln!("  ℹ No missing keys found. No patch file created.");
+            } else {
+                for path in &created_files {
+                    eprintln!("✔ Patch file created: {}", path.display());
+                }
             }
         }
     }

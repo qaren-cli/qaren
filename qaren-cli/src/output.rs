@@ -105,9 +105,9 @@ pub fn print_diff_result(
         format!(
             "Summary: {} only in {}, {} only in {}, {} modified{}",
             result.missing_in_file2.len(),
-            label1,
+            label1.red(),
             result.missing_in_file1.len(),
-            label2,
+            label2.green(),
             result.modified.len(),
             if result.identical.is_empty() {
                 String::new()
@@ -174,3 +174,52 @@ pub fn print_literal_diff(result: &LiteralDiffResult) {
     );
 }
 
+/// Helper function to escape strings for JSON output
+fn escape_json(s: &str) -> String {
+    s.replace('\\', "\\\\")
+     .replace('\"', "\\\"")
+     .replace('\n', "\\n")
+     .replace('\r', "\\r")
+     .replace('\t', "\\t")
+}
+
+/// Print the result of a semantic key-value comparison in JSON format.
+pub fn print_json_diff(result: &DiffResult, show_secrets: bool) {
+    let mut json = String::new();
+    json.push_str("{\n");
+
+    // Missing in file1
+    json.push_str("  \"missing_in_source\": [\n");
+    for (i, pair) in result.missing_in_file1.iter().enumerate() {
+        let val = escape_json(&mask_value(&pair.key, &pair.value, show_secrets));
+        json.push_str(&format!("    {{\"key\": \"{}\", \"value\": \"{}\"}}", escape_json(&pair.key), val));
+        if i < result.missing_in_file1.len() - 1 { json.push(','); }
+        json.push('\n');
+    }
+    json.push_str("  ],\n");
+
+    // Missing in file2
+    json.push_str("  \"missing_in_target\": [\n");
+    for (i, pair) in result.missing_in_file2.iter().enumerate() {
+        let val = escape_json(&mask_value(&pair.key, &pair.value, show_secrets));
+        json.push_str(&format!("    {{\"key\": \"{}\", \"value\": \"{}\"}}", escape_json(&pair.key), val));
+        if i < result.missing_in_file2.len() - 1 { json.push(','); }
+        json.push('\n');
+    }
+    json.push_str("  ],\n");
+
+    // Modified
+    json.push_str("  \"modified\": {\n");
+    for (i, m) in result.modified.iter().enumerate() {
+        let val1 = escape_json(&mask_value(&m.key, &m.value_file1, show_secrets));
+        let val2 = escape_json(&mask_value(&m.key, &m.value_file2, show_secrets));
+        json.push_str(&format!("    \"{}\": {{\"old\": \"{}\", \"new\": \"{}\"}}", escape_json(&m.key), val1, val2));
+        if i < result.modified.len() - 1 { json.push(','); }
+        json.push('\n');
+    }
+    json.push_str("  }\n");
+
+    json.push_str("}\n");
+
+    print!("{}", json);
+}

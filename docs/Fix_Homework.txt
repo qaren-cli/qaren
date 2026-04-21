@@ -1,0 +1,60 @@
+SELECT 
+    "Id",
+    "Details" AS "OldDetails",
+    jsonb_build_object(
+        'classId', ("Details"::jsonb ->> 'classId')::int,
+        'lessonId', ("Details"::jsonb ->> 'lessonId')::int,
+        'teacherId', ("Details"::jsonb ->> 'teacherId')::int,
+        'questions', (
+            SELECT jsonb_agg(
+                jsonb_build_object(
+                    'isCorrect', false,
+                    'questionId', (q_elem ->> 'questionId')::int,
+                    'teacherNote', '',
+                    'studentAnswer', q_elem ->> 'answer',
+                    'questionData', jsonb_build_object(
+                        'id', q."Id",
+                        'type', q."Type",
+                        'title', q."Title",
+                        'questionDetails', q."QuestionDetails"
+                    )
+                )
+            )
+            FROM jsonb_array_elements("Details"::jsonb -> 'questions') AS q_elem
+            -- Join with the Questions table to fetch the dynamic data
+            LEFT JOIN "Questions" q ON q."Id" = (q_elem ->> 'questionId')::int
+        )
+    ) AS "NewDetails"
+FROM "StudentSubmission"
+-- Only target rows that match the "second" structure (e.g., they contain the "answer" key)
+WHERE "Details"::jsonb -> 'questions' -> 0 ? 'answer';
+
+
+begin;
+UPDATE "StudentSubmission"
+SET "Details" = jsonb_build_object(
+    'classId', ("Details"::jsonb ->> 'classId')::int,
+    'lessonId', ("Details"::jsonb ->> 'lessonId')::int,
+    'teacherId', ("Details"::jsonb ->> 'teacherId')::int,
+    'questions', (
+        SELECT jsonb_agg(
+            jsonb_build_object(
+                'isCorrect', false,
+                'questionId', (q_elem ->> 'questionId')::int,
+                'teacherNote', '',
+                'studentAnswer', q_elem ->> 'answer',
+                'questionData', jsonb_build_object(
+                    'id', q."Id",
+                    'type', q."Type",
+                    'title', q."Title",
+                    'questionDetails', q."QuestionDetails"
+                )
+            )
+        )
+        FROM jsonb_array_elements("Details"::jsonb -> 'questions') AS q_elem
+        LEFT JOIN "Questions" q ON q."Id" = (q_elem ->> 'questionId')::int
+    )
+)
+WHERE "Details"::jsonb -> 'questions' -> 0 ? 'answer';
+commit;
+rollback;
