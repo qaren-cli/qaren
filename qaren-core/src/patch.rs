@@ -22,30 +22,41 @@ use std::path::{Path, PathBuf};
 pub fn generate_patch(
     diff_result: &DiffResult,
     output_path: &Path,
-    options: &ParseOptions,
+    options1: &ParseOptions,
+    options2: &ParseOptions,
     direction: PatchDirection,
 ) -> QarenResult<Vec<PathBuf>> {
     match direction {
         PatchDirection::SourceToTarget => {
-            generate_single_patch(&diff_result.missing_in_file2, output_path, options)?;
+            if diff_result.missing_in_file2.is_empty() {
+                return Ok(vec![]);
+            }
+            generate_single_patch(&diff_result.missing_in_file2, output_path, options2)?;
             Ok(vec![output_path.to_path_buf()])
         }
         PatchDirection::TargetToSource => {
-            generate_single_patch(&diff_result.missing_in_file1, output_path, options)?;
+            if diff_result.missing_in_file1.is_empty() {
+                return Ok(vec![]);
+            }
+            generate_single_patch(&diff_result.missing_in_file1, output_path, options1)?;
             Ok(vec![output_path.to_path_buf()])
         }
         PatchDirection::Bidirectional => {
             let mut created_files = Vec::new();
 
             // Generate source-to-target patch
-            let s2t_path = append_suffix(output_path, "source-to-target");
-            generate_single_patch(&diff_result.missing_in_file2, &s2t_path, options)?;
-            created_files.push(s2t_path);
+            if !diff_result.missing_in_file2.is_empty() {
+                let s2t_path = append_suffix(output_path, "source-to-target");
+                generate_single_patch(&diff_result.missing_in_file2, &s2t_path, options2)?;
+                created_files.push(s2t_path);
+            }
 
             // Generate target-to-source patch
-            let t2s_path = append_suffix(output_path, "target-to-source");
-            generate_single_patch(&diff_result.missing_in_file1, &t2s_path, options)?;
-            created_files.push(t2s_path);
+            if !diff_result.missing_in_file1.is_empty() {
+                let t2s_path = append_suffix(output_path, "target-to-source");
+                generate_single_patch(&diff_result.missing_in_file1, &t2s_path, options1)?;
+                created_files.push(t2s_path);
+            }
 
             Ok(created_files)
         }
@@ -149,12 +160,10 @@ mod tests {
         let diff = make_diff(vec![], vec![]);
         let opts = ParseOptions::default();
 
-        let paths = generate_patch(&diff, &output, &opts, PatchDirection::SourceToTarget)
+        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::SourceToTarget)
             .expect("should succeed");
 
-        assert_eq!(paths.len(), 1);
-        let content = std::fs::read_to_string(&paths[0]).expect("read");
-        assert!(content.is_empty());
+        assert_eq!(paths.len(), 0);
     }
 
     #[test]
@@ -167,7 +176,7 @@ mod tests {
         );
         let opts = ParseOptions::default();
 
-        let paths = generate_patch(&diff, &output, &opts, PatchDirection::SourceToTarget)
+        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::SourceToTarget)
             .expect("should succeed");
 
         assert_eq!(paths.len(), 1);
@@ -188,7 +197,7 @@ mod tests {
         );
         let opts = ParseOptions::default();
 
-        let paths = generate_patch(&diff, &output, &opts, PatchDirection::SourceToTarget)
+        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::SourceToTarget)
             .expect("should succeed");
 
         let content = std::fs::read_to_string(&paths[0]).expect("read");
@@ -206,7 +215,7 @@ mod tests {
         );
         let opts = ParseOptions::default();
 
-        let paths = generate_patch(&diff, &output, &opts, PatchDirection::TargetToSource)
+        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::TargetToSource)
             .expect("should succeed");
 
         let content = std::fs::read_to_string(&paths[0]).expect("read");
@@ -224,7 +233,7 @@ mod tests {
         );
         let opts = ParseOptions::default();
 
-        let paths = generate_patch(&diff, &output, &opts, PatchDirection::Bidirectional)
+        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::Bidirectional)
             .expect("should succeed");
 
         assert_eq!(paths.len(), 2);
@@ -291,7 +300,7 @@ mod tests {
         let diff = make_diff(vec![("KEY", "val")], vec![]);
         let opts = ParseOptions::default();
 
-        let result = generate_patch(&diff, &bad_path, &opts, PatchDirection::SourceToTarget);
+        let result = generate_patch(&diff, &bad_path, &opts, &opts, PatchDirection::SourceToTarget);
         assert!(result.is_err());
     }
 
@@ -305,7 +314,7 @@ mod tests {
             ..ParseOptions::default()
         };
 
-        let paths = generate_patch(&diff, &output, &opts, PatchDirection::SourceToTarget)
+        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::SourceToTarget)
             .expect("should succeed");
 
         let content = std::fs::read_to_string(&paths[0]).expect("read");
@@ -420,9 +429,9 @@ mod property_tests {
         // Source-to-target: should contain exactly keys in A missing from B
         let s2t_path = tmp.path().join("s2t.env");
         if let Ok(paths) =
-            generate_patch(&diff, &s2t_path, &opts, PatchDirection::SourceToTarget)
+            generate_patch(&diff, &s2t_path, &opts, &opts, PatchDirection::SourceToTarget)
         {
-            let content = std::fs::read_to_string(&paths[0]).unwrap_or_default();
+            let content = paths.first().map(|p| std::fs::read_to_string(p).unwrap_or_default()).unwrap_or_default();
             let expected_keys: HashSet<_> =
                 diff.missing_in_file2.iter().map(|p| &p.key).collect();
 
@@ -437,9 +446,9 @@ mod property_tests {
         // Target-to-source: should contain exactly keys in B missing from A
         let t2s_path = tmp.path().join("t2s.env");
         if let Ok(paths) =
-            generate_patch(&diff, &t2s_path, &opts, PatchDirection::TargetToSource)
+            generate_patch(&diff, &t2s_path, &opts, &opts, PatchDirection::TargetToSource)
         {
-            let content = std::fs::read_to_string(&paths[0]).unwrap_or_default();
+            let content = paths.first().map(|p| std::fs::read_to_string(p).unwrap_or_default()).unwrap_or_default();
             let expected_keys: HashSet<_> =
                 diff.missing_in_file1.iter().map(|p| &p.key).collect();
 
@@ -478,7 +487,7 @@ mod property_tests {
         // Generate patch
         let patch_path = tmp.path().join("roundtrip.env");
         if let Ok(paths) =
-            generate_patch(&diff, &patch_path, &opts, PatchDirection::SourceToTarget)
+            generate_patch(&diff, &patch_path, &opts, &opts, PatchDirection::SourceToTarget)
         {
             // Parse the generated patch file
             let parsed = match parser::parse_file(&paths[0], &opts) {
@@ -525,13 +534,19 @@ mod property_tests {
         };
 
         let output_path = tmp.path().join("bidir.env");
-        let paths = match generate_patch(&diff, &output_path, &opts, PatchDirection::Bidirectional)
+        let paths = match generate_patch(&diff, &output_path, &opts, &opts, PatchDirection::Bidirectional)
         {
             Ok(p) => p,
             Err(_) => return TestResult::discard(),
         };
 
-        assert_eq!(paths.len(), 2);
+        let expected_len = (if diff.missing_in_file2.is_empty() { 0 } else { 1 })
+            + (if diff.missing_in_file1.is_empty() { 0 } else { 1 });
+        assert_eq!(paths.len(), expected_len);
+
+        if paths.len() < 2 {
+            return TestResult::passed();
+        }
 
         // Parse both patch files
         let s2t_parsed = match parser::parse_file(&paths[0], &opts) {

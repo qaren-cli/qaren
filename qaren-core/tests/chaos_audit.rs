@@ -708,6 +708,7 @@ mod patch_chaos {
             &diff,
             &bad_path,
             &ParseOptions::default(),
+            &ParseOptions::default(),
             PatchDirection::SourceToTarget,
         );
         assert!(result.is_err());
@@ -724,7 +725,7 @@ mod patch_chaos {
             vec![],
         );
         let opts = ParseOptions::default();
-        let paths = generate_patch(&diff, &output, &opts, PatchDirection::SourceToTarget)
+        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::SourceToTarget)
             .expect("should succeed");
 
         let content = std::fs::read_to_string(&paths[0]).expect("read");
@@ -747,7 +748,7 @@ mod patch_chaos {
             vec![],
         );
         let opts = ParseOptions::default();
-        let paths = generate_patch(&diff, &output, &opts, PatchDirection::SourceToTarget)
+        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::SourceToTarget)
             .expect("should succeed");
 
         // Re-parse the generated patch
@@ -780,14 +781,10 @@ mod patch_chaos {
         let output = tmp.path().join("empty_bi.env");
         let diff = make_diff(vec![], vec![]);
         let opts = ParseOptions::default();
-        let paths = generate_patch(&diff, &output, &opts, PatchDirection::Bidirectional)
+        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::Bidirectional)
             .expect("should succeed");
 
-        assert_eq!(paths.len(), 2);
-        for path in &paths {
-            let content = std::fs::read_to_string(path).expect("read");
-            assert!(content.is_empty());
-        }
+        assert_eq!(paths.len(), 0);
     }
 
     // ── 4.5: Patch with delimiter in value ──────────────────────────
@@ -804,7 +801,7 @@ mod patch_chaos {
             delimiter: ':',
             ..ParseOptions::default()
         };
-        let paths = generate_patch(&diff, &output, &opts, PatchDirection::SourceToTarget)
+        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::SourceToTarget)
             .expect("should succeed");
 
         let content = std::fs::read_to_string(&paths[0]).expect("read");
@@ -949,6 +946,7 @@ mod e2e_attack_scenarios {
         let paths = generate_patch(
             &result,
             &patch_path,
+            &opts,
             &opts,
             PatchDirection::Bidirectional,
         )

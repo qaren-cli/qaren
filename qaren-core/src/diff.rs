@@ -15,16 +15,20 @@ use similar::{ChangeTag, TextDiff};
 /// Normalise a value (or key) string for comparison purposes according to `DiffOptions`.
 #[inline]
 fn normalise(value: &str, opts: &DiffOptions) -> String {
-    let s = if opts.ignore_whitespace {
+    let mut s = if opts.ignore_all_space {
         value.chars().filter(|c| !c.is_whitespace()).collect()
+    } else if opts.ignore_space_change {
+        value.split_whitespace().collect::<Vec<_>>().join(" ")
+    } else if opts.ignore_trailing_space {
+        value.trim_end().to_string()
     } else {
         value.to_string()
     };
+    
     if opts.ignore_case {
-        s.to_lowercase()
-    } else {
-        s
+        s = s.to_lowercase();
     }
+    s
 }
 
 /// Perform semantic key-value comparison between two configuration files.
@@ -106,7 +110,7 @@ pub fn literal_diff(content1: &str, content2: &str, opts: &DiffOptions) -> Liter
     let lines1: Vec<&str> = content1.lines().collect();
     let lines2: Vec<&str> = content2.lines().collect();
 
-    let (text1, text2) = if !opts.ignore_case && !opts.ignore_whitespace {
+    let (text1, text2) = if !opts.ignore_case && !opts.ignore_all_space && !opts.ignore_space_change && !opts.ignore_trailing_space {
         (content1.to_string(), content2.to_string())
     } else {
         (
@@ -131,19 +135,25 @@ pub fn literal_diff(content1: &str, content2: &str, opts: &DiffOptions) -> Liter
             ChangeTag::Equal => lines1.get(old_line_num - 1).unwrap_or(&"").to_string(),
         };
 
+        let is_blank = orig_content.trim().is_empty();
+
         match change.tag() {
             ChangeTag::Delete => {
-                deletions.push(DiffLine {
-                    content: orig_content,
-                    line_number: old_line_num,
-                });
+                if !opts.ignore_blank_lines || !is_blank {
+                    deletions.push(DiffLine {
+                        content: orig_content,
+                        line_number: old_line_num,
+                    });
+                }
                 old_line_num += 1;
             }
             ChangeTag::Insert => {
-                additions.push(DiffLine {
-                    content: orig_content,
-                    line_number: new_line_num,
-                });
+                if !opts.ignore_blank_lines || !is_blank {
+                    additions.push(DiffLine {
+                        content: orig_content,
+                        line_number: new_line_num,
+                    });
+                }
                 new_line_num += 1;
             }
             ChangeTag::Equal => {
@@ -331,7 +341,7 @@ mod tests {
     fn test_ignore_case_treats_as_identical() {
         let file1 = make_config(&[("KEY", "Value")]);
         let file2 = make_config(&[("KEY", "value")]);
-        let opts = DiffOptions { ignore_case: true, ignore_whitespace: false };
+        let opts = DiffOptions { ignore_case: true, ..DiffOptions::default() };
         let result = semantic_diff(&file1, &file2, &opts);
         assert!(result.is_identical(), "ignore_case should treat 'Value' == 'value'");
     }
@@ -348,7 +358,7 @@ mod tests {
     fn test_ignore_whitespace_treats_as_identical() {
         let file1 = make_config(&[("KEY", "hello   world")]);
         let file2 = make_config(&[("KEY", "hello world")]);
-        let opts = DiffOptions { ignore_case: false, ignore_whitespace: true };
+        let opts = DiffOptions { ignore_all_space: true, ..DiffOptions::default() };
         let result = semantic_diff(&file1, &file2, &opts);
         assert!(result.is_identical(), "ignore_whitespace should collapse spaces");
     }
@@ -366,7 +376,7 @@ mod tests {
         // Even when ignoring case, the STORED values should be the originals
         let file1 = make_config(&[("KEY", "Value")]);
         let file2 = make_config(&[("KEY", "value")]);
-        let opts = DiffOptions { ignore_case: true, ignore_whitespace: false };
+        let opts = DiffOptions { ignore_case: true, ..DiffOptions::default() };
         let result = semantic_diff(&file1, &file2, &opts);
         // Identical — but we verify normalise() didn't mutate stored values
         assert!(result.modified.is_empty());

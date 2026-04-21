@@ -30,7 +30,7 @@ fn test_no_args_shows_usage() {
     qaren_cmd()
         .assert()
         .failure() // clap exits 2 on no args
-        .stderr(predicate::str::contains("Usage"));
+        .stdout(predicate::str::contains("Usage"));
 }
 
 #[test]
@@ -63,7 +63,7 @@ fn test_kv_identical_files_exit_0() {
         .args(["kv", &f1.display().to_string(), &f2.display().to_string()])
         .assert()
         .code(0)
-        .stdout(predicate::str::contains("identical"));
+        .stdout(predicate::str::is_empty());
 }
 
 // Legacy alias `kvp` still works
@@ -167,7 +167,7 @@ fn test_kv_per_file_delimiter() {
         ])
         .assert()
         .code(0)
-        .stdout(predicate::str::contains("identical"));
+        .stdout(predicate::str::is_empty());
 }
 
 // ─── kv: Auto-detect delimiter ────────────────────────────────────
@@ -182,7 +182,7 @@ fn test_kv_auto_detect_equals() {
         .args(["kv", &f1.display().to_string(), &f2.display().to_string()])
         .assert()
         .code(0)
-        .stdout(predicate::str::contains("identical"));
+        .stdout(predicate::str::is_empty());
 }
 
 #[test]
@@ -195,7 +195,7 @@ fn test_kv_auto_detect_colon() {
         .args(["kv", &f1.display().to_string(), &f2.display().to_string()])
         .assert()
         .code(0)
-        .stdout(predicate::str::contains("identical"));
+        .stdout(predicate::str::is_empty());
 }
 
 // ─── kv: Invalid delimiter → exit 2 ──────────────────────────────
@@ -273,7 +273,7 @@ fn test_kv_ignore_case() {
         .args(["kv", &f1.display().to_string(), &f2.display().to_string(), "-i"])
         .assert()
         .code(0)
-        .stdout(predicate::str::contains("identical"));
+        .stdout(predicate::str::is_empty());
 }
 
 // ─── kv: Ignore whitespace ────────────────────────────────────────
@@ -288,7 +288,7 @@ fn test_kv_ignore_whitespace() {
         .args(["kv", &f1.display().to_string(), &f2.display().to_string(), "-w"])
         .assert()
         .code(0)
-        .stdout(predicate::str::contains("identical"));
+        .stdout(predicate::str::is_empty());
 }
 
 // ─── kv: Brief mode ───────────────────────────────────────────────
@@ -304,7 +304,7 @@ fn test_kv_brief_mode() {
         .assert()
         .code(1)
         // Brief mode should show Summary but NOT per-key details
-        .stdout(predicate::str::contains("Summary"))
+        .stdout(predicate::str::contains("differ"))
         .stdout(predicate::str::contains("Only in").not());
 }
 
@@ -380,11 +380,11 @@ fn test_kv_strip_quotes() {
             "kv",
             &f1.display().to_string(),
             &f2.display().to_string(),
-            "-s",
+            "--strip-quotes",
         ])
         .assert()
         .code(0)
-        .stdout(predicate::str::contains("identical"));
+        .stdout(predicate::str::is_empty());
 }
 
 // ─── diff: Literal comparison ─────────────────────────────────────
@@ -399,7 +399,7 @@ fn test_diff_identical_files() {
         .args(["diff", &f1.display().to_string(), &f2.display().to_string()])
         .assert()
         .code(0)
-        .stdout(predicate::str::contains("identical"));
+        .stdout(predicate::str::is_empty());
 }
 
 #[test]
@@ -488,7 +488,7 @@ fn test_diff_literal_ignore_case() {
         .args(["diff", &f1.display().to_string(), &f2.display().to_string(), "-i"])
         .assert()
         .code(0)
-        .stdout(predicate::str::contains("identical"));
+        .stdout(predicate::str::is_empty());
 }
 
 #[test]
@@ -501,7 +501,7 @@ fn test_diff_literal_ignore_whitespace() {
         .args(["diff", &f1.display().to_string(), &f2.display().to_string(), "-w"])
         .assert()
         .code(0)
-        .stdout(predicate::str::contains("identical"));
+        .stdout(predicate::str::is_empty());
 }
 
 #[test]
@@ -514,6 +514,8 @@ fn test_diff_literal_brief_mode() {
         .args(["diff", &f1.display().to_string(), &f2.display().to_string(), "-q"])
         .assert()
         .code(1)
-        .stdout(predicate::str::contains("Summary"))
-        .stdout(predicate::str::contains("additions"));
+        .stdout(predicate::str::contains("differ"));
 }
+
+
+

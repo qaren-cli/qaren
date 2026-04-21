@@ -16,6 +16,7 @@
 mod commands;
 mod config;
 mod masking;
+mod examples;
 mod output;
 
 use clap::Parser;
@@ -64,26 +65,35 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
         colored::control::set_override(false);
     }
 
+    if cli.example {
+        let subcmd = match &cli.command {
+            Some(Commands::Diff { .. }) => Some("diff"),
+            Some(Commands::Kv { .. }) => Some("kv"),
+            Some(Commands::Config { .. }) => Some("config"),
+            None => None,
+        };
+        crate::examples::print_examples(subcmd);
+        return Ok((true, cfg));
+    }
+
     match cli.command {
-        Commands::Diff { file1, file2, ignore_case, ignore_whitespace, brief } => {
-            let identical = handle_diff_command(&file1, &file2, ignore_case, ignore_whitespace, brief)?;
+        Some(Commands::Diff { file1, file2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, shared }) => {
+            let identical = handle_diff_command(&file1, &file2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, &shared)?;
             Ok((identical, cfg))
         }
-        Commands::Kv {
+        Some(Commands::Kv {
             file1,
             file2,
             delimiter,
             d1,
             d2,
             strip_quotes,
-            ignore_case,
-            ignore_whitespace,
+            shared,
             show_secrets,
             verbose,
-            brief,
             generate_missing,
             direction,
-        } => {
+        }) => {
             let identical = handle_kv_command(
                 &file1,
                 &file2,
@@ -91,21 +101,25 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
                 d1.as_deref(),
                 d2.as_deref(),
                 strip_quotes,
-                ignore_case,
-                ignore_whitespace,
+                &shared,
                 show_secrets,
                 verbose,
-                brief,
                 generate_missing.as_deref(),
                 &direction,
             )?;
             Ok((identical, cfg))
         }
-        Commands::Config { what, action } => {
+        Some(Commands::Config { what, action }) => {
             config::handle_config_command(&what, &action);
             // Config commands always succeed and return "identical" = true
             // (so the exit code is always 0)
             Ok((true, cfg))
+        }
+        None => {
+            use clap::CommandFactory;
+            let mut cmd = crate::commands::Cli::command();
+            cmd.print_help().unwrap();
+            std::process::exit(2);
         }
     }
 }
@@ -118,9 +132,11 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
 fn handle_diff_command(
     file1: &Path,
     file2: &Path,
-    ignore_case: bool,
-    ignore_whitespace: bool,
-    brief: bool,
+    unified: bool,
+    ignore_space_change: bool,
+    ignore_trailing_space: bool,
+    ignore_blank_lines: bool,
+    shared: &crate::commands::SharedDiffOptions,
 ) -> Result<bool, QarenError> {
     let content1 = std::fs::read_to_string(file1)
         .map_err(|e| QarenError::from_io_with_path(e, file1.to_path_buf()))?;
@@ -128,8 +144,11 @@ fn handle_diff_command(
         .map_err(|e| QarenError::from_io_with_path(e, file2.to_path_buf()))?;
 
     let opts = DiffOptions {
-        ignore_case,
-        ignore_whitespace,
+        ignore_case: shared.ignore_case,
+        ignore_all_space: shared.ignore_all_space,
+        ignore_space_change,
+        ignore_trailing_space,
+        ignore_blank_lines,
     };
 
     let result = literal_diff(&content1, &content2, &opts);
@@ -138,17 +157,37 @@ fn handle_diff_command(
         && result.deletions.is_empty()
         && result.modifications.is_empty();
 
-    if brief {
-        let l1 = file1.file_name().and_then(|n| n.to_str()).unwrap_or("file1");
-        let l2 = file2.file_name().and_then(|n| n.to_str()).unwrap_or("file2");
-        if identical {
-            println!("Summary: {} and {} are identical", l1, l2);
-        } else {
-            println!("Summary: {} and {} differ ({} additions, {} deletions, {} modifications)", 
-                l1, l2, result.additions.len(), result.deletions.len(), result.modifications.len());
+    let l1 = file1.file_name().and_then(|n| n.to_str()).unwrap_or("file1");
+    let l2 = file2.file_name().and_then(|n| n.to_str()).unwrap_or("file2");
+
+    if identical {
+        if shared.report_identical_files {
+            println!("Files {} and {} are identical", l1, l2);
         }
+        // POSIX diff stays silent if identical and -s is NOT provided
     } else {
-        output::print_literal_diff(&result);
+        if shared.brief {
+            println!("Files {} and {} differ", l1, l2);
+        } else if unified {
+            let diff = similar::TextDiff::from_lines(&content1, &content2);
+            let diff_str = diff.unified_diff().context_radius(3).header(l1, l2).to_string();
+            use colored::Colorize;
+            for line in diff_str.lines() {
+                if line.starts_with('+') && !line.starts_with("+++") {
+                    println!("{}", line.green());
+                } else if line.starts_with('-') && !line.starts_with("---") {
+                    println!("{}", line.red());
+                } else if line.starts_with("@@") {
+                    println!("{}", line.cyan());
+                } else if line.starts_with("+++") || line.starts_with("---") {
+                    println!("{}", line.bold());
+                } else {
+                    println!("{}", line);
+                }
+            }
+        } else {
+            output::print_literal_diff(&result);
+        }
     }
 
     Ok(identical)
@@ -178,11 +217,9 @@ fn handle_kv_command(
     d1: Option<&str>,
     d2: Option<&str>,
     strip_quotes: bool,
-    ignore_case: bool,
-    ignore_whitespace: bool,
+    shared: &crate::commands::SharedDiffOptions,
     show_secrets: bool,
     verbose: bool,
-    brief: bool,
     generate_missing: Option<&Path>,
     direction: &str,
 ) -> Result<bool, QarenError> {
@@ -208,14 +245,12 @@ fn handle_kv_command(
         delimiter: delim1,
         strip_quotes,
         ignore_case: false,    // parsing is case-preserving; diff handles case
-        ignore_whitespace: false,
         ..ParseOptions::default()
     };
     let opts2 = ParseOptions {
         delimiter: delim2,
         strip_quotes,
         ignore_case: false,
-        ignore_whitespace: false,
         ..ParseOptions::default()
     };
 
@@ -230,8 +265,11 @@ fn handle_kv_command(
 
     // Build diff options
     let diff_opts = DiffOptions {
-        ignore_case,
-        ignore_whitespace,
+        ignore_case: shared.ignore_case,
+        ignore_all_space: shared.ignore_all_space,
+        ignore_space_change: false,
+        ignore_trailing_space: false,
+        ignore_blank_lines: false,
     };
 
     // Perform semantic diff
@@ -247,9 +285,20 @@ fn handle_kv_command(
         .and_then(|n| n.to_str())
         .unwrap_or("file2");
 
-    // Print results
-    output::print_diff_result(&diff_result, show_secrets, verbose, brief, label1, label2);
+    let identical = diff_result.is_identical();
 
+    // Print results
+    if identical {
+        if shared.report_identical_files {
+            println!("Files {} and {} are identical", label1, label2);
+        }
+    } else {
+        if shared.brief {
+            println!("Files {} and {} differ", label1, label2);
+        } else {
+            output::print_diff_result(&diff_result, show_secrets, verbose, label1, label2);
+        }
+    }
     // Annotate delimiter info when auto-detected and different
     if d1.is_none() && d2.is_none() && delimiter.is_none() && delim1 != delim2 {
         eprintln!(
@@ -264,18 +313,27 @@ fn handle_kv_command(
             .parse()
             .map_err(QarenError::InvalidArguments)?;
 
-        // Use file1's delimiter as the canonical output format
-        let patch_opts = ParseOptions {
+        let patch_opts1 = ParseOptions {
             delimiter: delim1,
             strip_quotes,
             ..ParseOptions::default()
         };
+        let patch_opts2 = ParseOptions {
+            delimiter: delim2,
+            strip_quotes,
+            ..ParseOptions::default()
+        };
 
-        let created_files = generate_patch(&diff_result, output_path, &patch_opts, patch_direction)?;
+        let created_files = generate_patch(&diff_result, output_path, &patch_opts1, &patch_opts2, patch_direction)?;
 
         eprintln!();
-        for path in &created_files {
-            eprintln!("✔ Patch file created: {}", path.display());
+        eprintln!();
+        if created_files.is_empty() {
+            eprintln!("  ℹ No missing keys found. No patch file created.");
+        } else {
+            for path in &created_files {
+                eprintln!("✔ Patch file created: {}", path.display());
+            }
         }
     }
 
@@ -297,7 +355,12 @@ fn print_error_hints(err: &QarenError) {
         }
         QarenError::FileNotFound(path) => {
             eprintln!("  hint: check that '{}' exists and is readable", path.display());
+            eprintln!("  hint: to see usage examples run 'qaren --example' or 'qaren --help'");
         }
-        _ => {}
+        _ => {
+            eprintln!("  hint: check your arguments or run 'qaren --help' or 'qaren --example' for syntax help");
+        }
     }
 }
+
+

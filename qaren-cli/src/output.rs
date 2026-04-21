@@ -20,16 +20,12 @@ pub fn print_diff_result(
     result: &DiffResult,
     show_secrets: bool,
     verbose: bool,
-    brief: bool,
     label1: &str,
     label2: &str,
 ) {
     if result.is_identical() {
-        println!("{}", "✔ Files are identical".green().bold());
         return;
     }
-
-    if !brief {
         // ── Only in file1 (missing from file2) ──────────────────────
         if !result.missing_in_file2.is_empty() {
             println!(
@@ -101,7 +97,6 @@ pub fn print_diff_result(
                 println!("  {} {}", "=".dimmed(), key.dimmed());
             }
         }
-    }
 
     // ── Summary ──────────────────────────────────────────────────────
     println!();
@@ -178,3 +173,4 @@ pub fn print_literal_diff(result: &LiteralDiffResult) {
         .bold()
     );
 }
+

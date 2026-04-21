@@ -44,8 +44,6 @@ pub struct ParseOptions {
     pub comment_prefixes: Vec<String>,
     /// Compare values case-insensitively (default: `false`)
     pub ignore_case: bool,
-    /// Ignore leading/trailing whitespace differences in values (default: `false`)
-    pub ignore_whitespace: bool,
 }
 
 impl Default for ParseOptions {
@@ -55,7 +53,6 @@ impl Default for ParseOptions {
             strip_quotes: false,
             comment_prefixes: vec!["#".to_string(), "//".to_string()],
             ignore_case: false,
-            ignore_whitespace: false,
         }
     }
 }
@@ -95,10 +92,20 @@ impl DiffResult {
 /// parsing — the raw parsed values are always stored unchanged.
 #[derive(Debug, Clone, Default)]
 pub struct DiffOptions {
-    /// Compare values case-insensitively.
+    /// Compare values case-insensitively (-i)
     pub ignore_case: bool,
-    /// Collapse internal whitespace and trim before comparing.
-    pub ignore_whitespace: bool,
+    
+    /// Ignore all white space (-w)
+    pub ignore_all_space: bool,
+
+    /// Ignore changes in the amount of white space (-b)
+    pub ignore_space_change: bool,
+
+    /// Ignore white space at line end (-Z)
+    pub ignore_trailing_space: bool,
+
+    /// Ignore changes where lines are all blank (-B)
+    pub ignore_blank_lines: bool,
 }
 
 

@@ -8,6 +8,25 @@
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
+#[derive(clap::Args, Debug, Default, Clone)]
+pub struct SharedDiffOptions {
+    /// Report only when files differ
+    #[arg(short = 'q', long)]
+    pub brief: bool,
+
+    /// Report when two files are the same
+    #[arg(short = 's', long)]
+    pub report_identical_files: bool,
+
+    /// Ignore case differences in file contents
+    #[arg(short = 'i', long)]
+    pub ignore_case: bool,
+
+    /// Ignore all white space (for KV: strips spaces inside values)
+    #[arg(short = 'w', long)]
+    pub ignore_all_space: bool,
+}
+
 // ─────────────────────────────────────────────────────────────────────
 // Top-level CLI
 // ─────────────────────────────────────────────────────────────────────
@@ -76,7 +95,11 @@ EXIT CODES:
   Run 'qaren config exit toggle' to switch to pipeline-friendly mode (always exit 0).")]
 pub struct Cli {
     #[command(subcommand)]
-    pub command: Commands,
+    pub command: Option<Commands>,
+
+    /// Print detailed usage examples
+    #[arg(long = "example", global = true)]
+    pub example: bool,
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -96,17 +119,24 @@ pub enum Commands {
         /// Second file to compare
         file2: PathBuf,
 
-        /// Compare lines case-insensitively  [short: -i]
-        #[arg(short = 'i', long)]
-        ignore_case: bool,
+        /// Output unified diff  [short: -u]
+        #[arg(short = 'u', long)]
+        unified: bool,
 
-        /// Ignore whitespace differences  [short: -w]
-        #[arg(short = 'w', long)]
-        ignore_whitespace: bool,
+        /// Ignore changes in the amount of white space
+        #[arg(short = 'b', long)]
+        ignore_space_change: bool,
 
-        /// Print summary only  [short: -q]
-        #[arg(short = 'q', long)]
-        brief: bool,
+        /// Ignore white space at line end
+        #[arg(short = 'Z', long)]
+        ignore_trailing_space: bool,
+
+        /// Ignore changes where lines are all blank
+        #[arg(short = 'B', long)]
+        ignore_blank_lines: bool,
+
+        #[command(flatten)]
+        shared: SharedDiffOptions,
     },
 
     /// Perform semantic key-value comparison [alias: kvp]
@@ -123,28 +153,23 @@ pub enum Commands {
         /// Delimiter for BOTH files when they share the same format.
         /// Auto-detected if omitted. Use --d1/--d2 for cross-format comparisons.
         /// Examples: '=', ':', ' '
-        #[arg(short = 'd', long, value_name = "CHAR")]
+        #[arg(short = 'd', long, value_name = "DELIMITER")]
         delimiter: Option<String>,
 
         /// Delimiter override for file1 only (overrides --delimiter for file1)
-        #[arg(long, value_name = "CHAR")]
+        #[arg(long, value_name = "DELIMITER")]
         d1: Option<String>,
 
         /// Delimiter override for file2 only (overrides --delimiter for file2)
-        #[arg(long, value_name = "CHAR")]
+        #[arg(long, value_name = "DELIMITER")]
         d2: Option<String>,
 
-        /// Strip surrounding quotes from keys and values  [short: -s]
-        #[arg(short = 's', long)]
+        /// Strip surrounding quotes from keys and values  [short: -Q]
+        #[arg(short = 'Q', long)]
         strip_quotes: bool,
 
-        /// Compare values case-insensitively  [short: -i]
-        #[arg(short = 'i', long)]
-        ignore_case: bool,
-
-        /// Ignore whitespace differences in values  [short: -w]
-        #[arg(short = 'w', long)]
-        ignore_whitespace: bool,
+        #[command(flatten)]
+        shared: SharedDiffOptions,
 
         /// Show secret values in plain text (disables masking)  [short: -S]
         #[arg(short = 'S', long)]
@@ -153,10 +178,6 @@ pub enum Commands {
         /// Show identical keys in output as well (hidden by default)  [short: -v]
         #[arg(short = 'v', long)]
         verbose: bool,
-
-        /// Print summary line only — no per-key details  [short: -q]
-        #[arg(short = 'q', long)]
-        brief: bool,
 
         /// Generate a patch file with missing keys  [short: -g]
         #[arg(short = 'g', long, value_name = "FILE")]
