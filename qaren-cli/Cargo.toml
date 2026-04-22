@@ -13,6 +13,7 @@ qaren-core = { path = "../qaren-core" }
 clap = { version = "4.5", features = ["derive"] }
 colored = "2.1"
 similar = "3.1.0"
+clap_complete = "4.6.2"
 
 [dev-dependencies]
 assert_cmd = "2.0"

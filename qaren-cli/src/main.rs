@@ -59,7 +59,15 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
     let cfg = load_config();
 
     // --color respects the persistent config (and NO_COLOR env convention)
-    let use_color = cfg.color && std::env::var("NO_COLOR").is_err();
+    let mut use_color = cfg.color && std::env::var("NO_COLOR").is_err();
+
+    // Disable color automatically for JSON output to prevent ANSI codes in strings
+    if let Some(Commands::Kv { output, .. }) = &cli.command {
+        if output == "json" {
+            use_color = false;
+        }
+    }
+
     if !use_color {
         // Disable colored output globally
         colored::control::set_override(false);
@@ -73,6 +81,13 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
             None => None,
         };
         crate::examples::print_examples(subcmd);
+        return Ok((true, cfg));
+    }
+
+    if let Some(shell) = cli.generate_completions {
+        use clap::CommandFactory;
+        let mut cmd = Cli::command();
+        clap_complete::generate(shell, &mut cmd, "qaren", &mut std::io::stdout());
         return Ok((true, cfg));
     }
 

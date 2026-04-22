@@ -6,6 +6,7 @@
 //! - `config` — persistent user configuration
 
 use clap::{Parser, Subcommand};
+use clap_complete::Shell;
 use std::path::PathBuf;
 
 #[derive(clap::Args, Debug, Default, Clone)]
@@ -29,6 +30,7 @@ pub struct SharedDiffOptions {
 /// for DevOps engineers and system administrators.
 #[derive(Parser)]
 #[command(name = "qaren")]
+#[command(bin_name = "qaren")]
 #[command(version)]
 #[command(about = "Semantic and literal diffing for configuration files")]
 #[command(long_about = "\
@@ -58,6 +60,10 @@ pub struct Cli {
     /// Print detailed usage examples
     #[arg(long = "example", global = true)]
     pub example: bool,
+
+    /// Generate shell completion scripts [possible values: bash, elvish, fish, powershell, zsh]
+    #[arg(long = "generate-completions", value_name = "SHELL", hide = true)]
+    pub generate_completions: Option<Shell>,
 }
 
 // ─────────────────────────────────────────────────────────────────────
