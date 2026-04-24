@@ -1,0 +1,53 @@
+# Project Brief: Qaren Desktop Application
+
+## 1. Project Overview
+Qaren (Arabic for "compare") is a high-performance, secure, and modern configuration comparison tool designed specifically for Developers, SysAdmins, Cloud Engineers, and DevOps professionals. The goal is to provide a powerful yet simple interface—blending the utility of classic editors like Notepad++ with modern IDE aesthetics and specialized DevOps features.
+
+## 2. Core User Personas
+*   **DevOps Engineers:** Comparing production vs. staging environments.
+*   **SysAdmins:** Detecting configuration drift in server fleets.
+*   **Developers:** Debugging local environment variable mismatches.
+
+## 3. Visual Identity & Design System
+*   **Primary Palette:** A clean, professional "Light Mode" base (White/Off-white) with a vibrant "Action Blue" (#3B82F6) for primary interactions and branding.
+*   **Typography:** Monospace fonts (Inter/Mono) for data clarity and line numbers, ensuring readability for code and configuration strings.
+*   **Consistency:** A shared component library ensures that headers, sidebars, and form elements feel unified across the main dashboard, settings, and export flows.
+
+## 4. Key Functional Features
+
+### 4.1. Comparative Analysis
+*   **Split Pane View:** A side-by-side display of source and target files.
+*   **Sync Scrolling:** Simultaneous scrolling of both panes for easier alignment.
+*   **Color-Coded Highlights:**
+    *   **Green:** Added keys/values.
+    *   **Red:** Deleted keys/values.
+    *   **Yellow/Orange:** Modified values for existing keys.
+*   **Diff Minimap:** A high-level visual strip on the right gutter showing where differences occur throughout the entire file.
+
+### 4.2. Intelligent Parsing
+*   **Mode Switcher:**
+    *   **Semantic KV:** Order-agnostic comparison focusing on key-value pairs.
+    *   **Literal Diff:** Traditional line-by-line comparison.
+*   **Format Auto-Detection:** Automatic detection of file types (.env, .yaml, .ini) with manual override capabilities.
+*   **Custom Delimiters:** Support for `=`, `:`, or space-separated keys.
+
+### 4.3. Security & Sensitivity
+*   **Secret Masking:** A one-click toggle (Eye icon) to mask sensitive substrings (e.g., "key", "secret", "token", "auth") with `***MASKED***`.
+*   **Offline First:** All comparisons happen in memory (Rust-based engine) to ensure no sensitive data leaves the local environment.
+
+### 4.4. Remediation & Workflow
+*   **Generate Patch:** Export missing keys into a new `.env.patch` file.
+*   **Bidirectional Export:** Options to generate source-to-target, target-to-source, or both patches.
+*   **Quick Ignore Rules:** A dedicated interface to exclude specific keys (e.g., timestamps) from comparison results.
+
+## 5. Screen Map
+1.  **Main Dashboard (Light Mode):** The core workspace with the split-pane editor, minimap, and primary toolbars.
+2.  **Settings Panel:** Configuration for parsing rules, delimiters, and quote stripping.
+3.  **Export Patch Dialog:** Selection for export direction and file path.
+4.  **Quick Ignore Rules:** Management of excluded keys.
+5.  **Main Dashboard (Dark Mode):** An alternative high-contrast version for low-light environments.
+
+## 6. Technical Requirements
+*   **Performance:** Sub-100ms comparison for 1000-line files.
+*   **Portability:** Single static binary for Windows, macOS, and Linux.
+*   **UX:** Support for Drag-and-Drop file loading.

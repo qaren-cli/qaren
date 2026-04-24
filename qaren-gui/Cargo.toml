@@ -10,3 +10,7 @@ path = "src/main.rs"
 
 [dependencies]
 qaren-core = { path = "../qaren-core" }
+eframe = "0.31"
+egui = "0.31"
+serde = { version = "1.0", features = ["derive"] }
+rfd = "0.15"
