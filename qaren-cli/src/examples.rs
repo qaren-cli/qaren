@@ -19,6 +19,9 @@ pub fn print_examples(subcmd: Option<&str>) {
             println!("    {} {} app.env ci.env -x SECRET_KEY -x DB_PASSWORD", "$".bright_black(), "qaren kv".green());
             println!("    {}\n", "Ignore specific sensitive or dynamic keys from the comparison.".bright_black());
 
+            println!("    {} {} prod.env staging.env --missing-only", "$".bright_black(), "qaren kv".green());
+            println!("    {}\n", "Show only the keys present in prod.env but missing in staging.env.".bright_black());
+
             println!("    {} {} build.env staging.env --ignore-keyword GITHUB", "$".bright_black(), "qaren kv".green());
             println!("    {}\n", "Exclude all keys containing 'GITHUB' (case-insensitive substring match).".bright_black());
 
@@ -53,6 +56,9 @@ pub fn print_examples(subcmd: Option<&str>) {
 
             println!("    {} {} ./dir1 ./dir2", "$".bright_black(), "qaren diff -r".green());
             println!("    {}\n", "Recursively compare directories (Literal diff recursively).".bright_black());
+
+            println!("    {} {} ./dir1 ./dir2 --files-only", "$".bright_black(), "qaren diff -r".green());
+            println!("    {}\n", "Compare directory structures only (find missing files), skip content comparison.".bright_black());
             println!();
         }
         _ => {

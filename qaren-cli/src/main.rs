@@ -93,7 +93,7 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
     }
 
     match cli.command {
-        Some(Commands::Diff { file1, file2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, recursive, brief, report_identical_files, shared }) => {
+        Some(Commands::Diff { file1, file2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, recursive, files_only, brief, report_identical_files, shared }) => {
             let (f1, f2) = match (file1, file2) {
                 (Some(f1), Some(f2)) => (f1, f2),
                 _ => {
@@ -105,11 +105,11 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
                     std::process::exit(2);
                 }
             };
-            let identical = handle_diff_command(&f1, &f2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, recursive, brief, report_identical_files, &shared)?;
+            let identical = handle_diff_command(&f1, &f2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, recursive, files_only, brief, report_identical_files, &shared)?;
             Ok((identical, cfg))
         }
         Some(Commands::Kv {
-            file1, file2, delimiter, d1, d2, strip_quotes, shared, recursive, output, ignore_keys, ignore_keywords, quiet, summary, show_secrets, verbose, generate_patch, mask_patches, direction
+            file1, file2, delimiter, d1, d2, strip_quotes, shared, recursive, output, ignore_keys, ignore_keywords, quiet, summary, show_secrets, verbose, missing_only, generate_patch, mask_patches, direction
         }) => {
             let (f1, f2) = match (file1, file2) {
                 (Some(f1), Some(f2)) => (f1, f2),
@@ -124,7 +124,7 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
             };
             let identical = handle_kv_command(
                 &f1, &f2, delimiter.as_deref(), d1.as_deref(), d2.as_deref(), strip_quotes, recursive, &output,
-                ignore_keys, ignore_keywords, quiet, summary, show_secrets, verbose,
+                ignore_keys, ignore_keywords, quiet, summary, show_secrets, verbose, missing_only,
                 generate_patch.as_deref(), mask_patches, &direction, &shared,
             )?;
             Ok((identical, cfg))
@@ -158,6 +158,7 @@ fn handle_diff_command(
     ignore_trailing_space: bool,
     ignore_blank_lines: bool,
     recursive: bool,
+    files_only: bool,
     brief: bool,
     report_identical_files: bool,
     shared: &crate::commands::SharedDiffOptions,
@@ -187,6 +188,10 @@ fn handle_diff_command(
             let label2 = format!("{}/{}", file2.display(), rel_path.display());
 
             if in_1 && in_2 {
+                if files_only {
+                    continue;
+                }
+
                 let c1 = std::fs::read_to_string(&p1).unwrap_or_default();
                 let c2 = std::fs::read_to_string(&p2).unwrap_or_default();
                 
@@ -321,6 +326,7 @@ fn handle_kv_command(
     summary: bool,
     show_secrets: bool,
     verbose: bool,
+    missing_only: bool,
     generate_patch: Option<&Path>,
     mask_patches: bool,
     direction: &str,
@@ -369,7 +375,26 @@ fn handle_kv_command(
             println!("[INFO] Recursive scan of file2: {}", file2.display());
         }
 
-        let dir_diff = semantic_diff_dir(file1, file2, &dir_opts1, &dir_opts2, &diff_opts);
+        let mut dir_diff = semantic_diff_dir(file1, file2, &dir_opts1, &dir_opts2, &diff_opts);
+
+        if missing_only {
+            let keys_to_remove: Vec<_> = dir_diff.files.iter()
+                .filter_map(|(k, v)| if matches!(v, qaren_core::FileDiffStatus::OrphanInTarget(_)) { Some(k.clone()) } else { None })
+                .collect();
+            for k in keys_to_remove {
+                dir_diff.files.remove(&k);
+            }
+
+            for status in dir_diff.files.values_mut() {
+                if let qaren_core::FileDiffStatus::Modified(res) = status {
+                    res.missing_in_file1.clear();
+                    res.modified.clear();
+                    if res.is_identical() {
+                        *status = qaren_core::FileDiffStatus::Identical;
+                    }
+                }
+            }
+        }
 
         if output_format == "json" {
             println!("{}", serde_json::to_string_pretty(&dir_diff).unwrap());
@@ -518,7 +543,12 @@ fn handle_kv_command(
     }
 
     // Perform semantic diff
-    let diff_result = semantic_diff(&config1, &config2, &diff_opts);
+    let mut diff_result = semantic_diff(&config1, &config2, &diff_opts);
+
+    if missing_only {
+        diff_result.missing_in_file1.clear();
+        diff_result.modified.clear();
+    }
 
     // Determine display labels from actual file stems
     let label1 = file1

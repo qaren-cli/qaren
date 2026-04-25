@@ -575,5 +575,39 @@ fn test_diff_literal_brief_mode() {
         .stdout(predicate::str::contains("differ"));
 }
 
+#[test]
+fn test_diff_files_only_recursive() {
+    let tmp = TempDir::new().unwrap();
+    let dir1 = tmp.path().join("dir1");
+    let dir2 = tmp.path().join("dir2");
+    fs::create_dir(&dir1).unwrap();
+    fs::create_dir(&dir2).unwrap();
 
+    fs::write(dir1.join("file1.txt"), "A").unwrap();
+    fs::write(dir2.join("file1.txt"), "B").unwrap();
+    fs::write(dir1.join("file2.txt"), "C").unwrap();
+    fs::write(dir2.join("file3.txt"), "D").unwrap();
 
+    qaren_cmd()
+        .args(["diff", "-r", "--files-only", &dir1.display().to_string(), &dir2.display().to_string()])
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains("file2.txt"))
+        .stdout(predicate::str::contains("file3.txt"))
+        .stdout(predicate::str::contains("file1.txt").not());
+}
+
+#[test]
+fn test_kv_missing_only() {
+    let tmp = TempDir::new().unwrap();
+    let f1 = create_temp_file(&tmp, "a.env", "A=1\nB=2\nC=3\n");
+    let f2 = create_temp_file(&tmp, "b.env", "B=20\nC=3\nD=4\n");
+
+    qaren_cmd()
+        .args(["kv", &f1.display().to_string(), &f2.display().to_string(), "--missing-only"])
+        .assert()
+        .code(1)
+        .stdout(predicate::str::contains("A"))
+        .stdout(predicate::str::contains("D").not())
+        .stdout(predicate::str::contains("B").not());
+}

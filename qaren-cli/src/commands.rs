@@ -103,6 +103,10 @@ pub enum Commands {
         #[arg(short = 'r', long)]
         recursive: bool,
 
+        /// Instead of comparing file contents, only compare file existence (requires -r)
+        #[arg(long, requires = "recursive")]
+        files_only: bool,
+
         /// Report only when files differ
         #[arg(short = 'q', long)]
         brief: bool,
@@ -178,6 +182,10 @@ pub enum Commands {
         /// Show identical keys in output as well (hidden by default)  [short: -v]
         #[arg(short = 'v', long, conflicts_with_all = ["quiet", "summary"])]
         verbose: bool,
+
+        /// Show only keys present in source but missing in target (ignores modifications/additions)
+        #[arg(long = "missing-only")]
+        missing_only: bool,
         /// Generate a patch file containing missing keys [short: -g]
         #[arg(short = 'g', long, value_name = "FILE")]
         generate_patch: Option<PathBuf>,
