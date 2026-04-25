@@ -426,6 +426,7 @@ dependencies = [
  "colored",
  "predicates",
  "qaren-core",
+ "serde_json",
  "similar 3.1.0",
  "tempfile",
 ]
@@ -436,16 +437,10 @@ version = "0.1.0"
 dependencies = [
  "quickcheck",
  "quickcheck_macros",
+ "serde",
  "similar 2.7.0",
  "tempfile",
  "thiserror",
-]
-
-[[package]]
-name = "qaren-gui"
-version = "0.1.0"
-dependencies = [
- "qaren-core",
 ]
 
 [[package]]
@@ -556,6 +551,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
 dependencies = [
  "serde_core",
+ "serde_derive",
 ]
 
 [[package]]

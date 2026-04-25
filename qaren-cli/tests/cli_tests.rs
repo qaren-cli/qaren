@@ -385,7 +385,7 @@ fn test_kv_generate_patch_source_to_target() {
         ])
         .assert()
         .code(1)
-        .stderr(predicate::str::contains("Patch file created"));
+        .stdout(predicate::str::contains("Generated"));
 
     // Verify patch contains the missing key
     let patch_content = fs::read_to_string(&patch_path).expect("read patch");
@@ -411,7 +411,7 @@ fn test_kv_generate_patch_bidirectional() {
         ])
         .assert()
         .code(1)
-        .stderr(predicate::str::contains("Patch file created"));
+        .stdout(predicate::str::contains("Generated"));
 
     let s2t = tmp.path().join("sync.source-to-target.env");
     let t2s = tmp.path().join("sync.target-to-source.env");
@@ -490,7 +490,7 @@ fn test_kv_direction_without_generate_missing() {
         ])
         .assert()
         .code(2)
-        .stderr(predicate::str::contains("--generate-missing"));
+        .stderr(predicate::str::contains("--generate-patch"));
 }
 
 // ─── config command ───────────────────────────────────────────────

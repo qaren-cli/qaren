@@ -5,9 +5,7 @@
 //! Pass `brief = true` to suppress per-key details and only print the summary.
 
 use colored::Colorize;
-use qaren_core::{DiffResult, LiteralDiffResult};
-
-use crate::masking::mask_value;
+use qaren_core::{mask_value, DiffResult, LiteralDiffResult};
 
 /// Print the result of a semantic key-value comparison to stdout.
 ///

@@ -30,7 +30,9 @@
 //! - [`patch`] — Patch file generator with bidirectional support
 
 pub mod diff;
+pub mod directory;
 pub mod error;
+pub mod masking;
 pub mod parser;
 pub mod patch;
 pub mod types;
@@ -39,10 +41,12 @@ pub mod types;
 //   use qaren_core::{parse_file, semantic_diff, generate_patch, ...};
 
 pub use diff::{literal_diff, semantic_diff};
+pub use directory::{collect_files_recursive, semantic_diff_dir, DirParseOptions};
 pub use error::{QarenError, QarenResult};
+pub use masking::{mask_value, should_mask};
 pub use parser::{detect_delimiter, parse_content, parse_file};
-pub use patch::generate_patch;
+pub use patch::{generate_patch, generate_recursive_patch};
 pub use types::{
-    ConfigFile, DiffLine, DiffOptions, DiffResult, KvPair, LiteralDiffResult, ModifiedPair,
+    ConfigFile, DiffLine, DiffOptions, DiffResult, DirDiffResult, FileDiffStatus, KvPair, LiteralDiffResult, ModifiedPair,
     ParseOptions, PatchDirection,
 };

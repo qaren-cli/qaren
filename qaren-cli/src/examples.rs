@@ -12,6 +12,9 @@ pub fn print_examples(subcmd: Option<&str>) {
 
             println!("    {} {} prod.env staging.env -g patch.env", "$".bright_black(), "qaren kv".green());
             println!("    {}\n", "Generate an intelligent patch file containing keys missing from prod.env.".bright_black());
+            
+            println!("    {} {} prod.env staging.env -g sync.env --direction bidirectional", "$".bright_black(), "qaren kv".green());
+            println!("    {}\n", "Generate two patch files (one for each direction) to synchronize both files.".bright_black());
 
             println!("    {} {} app.env ci.env -x SECRET_KEY -x DB_PASSWORD", "$".bright_black(), "qaren kv".green());
             println!("    {}\n", "Ignore specific sensitive or dynamic keys from the comparison.".bright_black());
@@ -30,6 +33,9 @@ pub fn print_examples(subcmd: Option<&str>) {
 
             println!("    {} {} prod.env staging.yaml --d2 ':'", "$".bright_black(), "qaren kv".green());
             println!("    {}\n", "Cross-format comparison (.env vs .yaml) using explicit delimiter logic.".bright_black());
+
+            println!("    {} {} ./prod_configs ./staging_configs", "$".bright_black(), "qaren kv -r".green());
+            println!("    {}\n", "Recursively compare entire directories, intelligently detecting missing files and keys.".bright_black());
             println!();
         }
         Some("diff") => {
@@ -44,6 +50,9 @@ pub fn print_examples(subcmd: Option<&str>) {
 
             println!("    {} {} file1.txt file2.txt -q", "$".bright_black(), "qaren diff".green());
             println!("    {}\n", "Quiet mode: Suppress all output. Exit 0 if identical, 1 if different.".bright_black());
+
+            println!("    {} {} ./dir1 ./dir2", "$".bright_black(), "qaren diff -r".green());
+            println!("    {}\n", "Recursively compare directories (Literal diff recursively).".bright_black());
             println!();
         }
         _ => {
@@ -58,6 +67,9 @@ pub fn print_examples(subcmd: Option<&str>) {
 
             println!("    {} {} exit toggle", "$".bright_black(), "qaren config".green());
             println!("    {}\n", "Toggle pipeline-friendly exit code behavior.".bright_black());
+
+            println!("    {} {}", "$".bright_black(), "qaren --generate-completions bash > ~/.local/share/bash-completion/completions/qaren".green());
+            println!("    {}\n", "Generate shell autocompletion script (supports bash, zsh, fish, powershell, elvish).".bright_black());
 
             println!("  {} {}\n  {}\n", "➔".bright_black(), "Want format-specific examples?".bold().cyan(), 
                      "Run `qaren <command> --example` (e.g. `qaren kv --example`)".bright_black());

@@ -15,7 +15,6 @@
 
 mod commands;
 mod config;
-mod masking;
 mod examples;
 mod output;
 
@@ -23,9 +22,11 @@ use clap::Parser;
 use commands::{validate_delimiter, Cli, Commands};
 use config::load_config;
 use qaren_core::{
-    detect_delimiter, generate_patch, literal_diff, parse_file, semantic_diff, DiffOptions,
-    ParseOptions, PatchDirection, QarenError,
+    collect_files_recursive, detect_delimiter, literal_diff, parse_file, semantic_diff,
+    semantic_diff_dir, DiffOptions, DirParseOptions, FileDiffStatus, ParseOptions, PatchDirection,
+    QarenError,
 };
+use std::collections::HashSet;
 use std::path::Path;
 use std::process;
 
@@ -92,7 +93,7 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
     }
 
     match cli.command {
-        Some(Commands::Diff { file1, file2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, brief, report_identical_files, shared }) => {
+        Some(Commands::Diff { file1, file2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, recursive, brief, report_identical_files, shared }) => {
             let (f1, f2) = match (file1, file2) {
                 (Some(f1), Some(f2)) => (f1, f2),
                 _ => {
@@ -104,26 +105,11 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
                     std::process::exit(2);
                 }
             };
-            let identical = handle_diff_command(&f1, &f2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, brief, report_identical_files, &shared)?;
+            let identical = handle_diff_command(&f1, &f2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, recursive, brief, report_identical_files, &shared)?;
             Ok((identical, cfg))
         }
         Some(Commands::Kv {
-            file1,
-            file2,
-            delimiter,
-            d1,
-            d2,
-            strip_quotes,
-            shared,
-            output,
-            ignore_keys,
-            ignore_keywords,
-            quiet,
-            summary,
-            show_secrets,
-            verbose,
-            generate_missing,
-            direction,
+            file1, file2, delimiter, d1, d2, strip_quotes, shared, recursive, output, ignore_keys, ignore_keywords, quiet, summary, show_secrets, verbose, generate_patch, mask_patches, direction
         }) => {
             let (f1, f2) = match (file1, file2) {
                 (Some(f1), Some(f2)) => (f1, f2),
@@ -137,22 +123,9 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
                 }
             };
             let identical = handle_kv_command(
-                &f1,
-                &f2,
-                delimiter.as_deref(),
-                d1.as_deref(),
-                d2.as_deref(),
-                strip_quotes,
-                &shared,
-                &output,
-                ignore_keys,
-                ignore_keywords,
-                quiet,
-                summary,
-                show_secrets,
-                verbose,
-                generate_missing.as_deref(),
-                &direction,
+                &f1, &f2, delimiter.as_deref(), d1.as_deref(), d2.as_deref(), strip_quotes, recursive, &output,
+                ignore_keys, ignore_keywords, quiet, summary, show_secrets, verbose,
+                generate_patch.as_deref(), mask_patches, &direction, &shared,
             )?;
             Ok((identical, cfg))
         }
@@ -184,10 +157,81 @@ fn handle_diff_command(
     ignore_space_change: bool,
     ignore_trailing_space: bool,
     ignore_blank_lines: bool,
+    recursive: bool,
     brief: bool,
     report_identical_files: bool,
     shared: &crate::commands::SharedDiffOptions,
 ) -> Result<bool, QarenError> {
+    if recursive {
+        let mut files1 = HashSet::new();
+        let mut files2 = HashSet::new();
+        let mut warnings = Vec::new();
+        
+        collect_files_recursive(file1, file1, &mut files1, &mut warnings);
+        collect_files_recursive(file2, file2, &mut files2, &mut warnings);
+
+        let all_files: HashSet<&std::path::PathBuf> = files1.union(&files2).collect();
+        let mut sorted_files: Vec<_> = all_files.into_iter().collect();
+        sorted_files.sort();
+
+        let mut all_identical = true;
+
+        for rel_path in sorted_files {
+            let in_1 = files1.contains(rel_path);
+            let in_2 = files2.contains(rel_path);
+            
+            let p1 = file1.join(rel_path);
+            let p2 = file2.join(rel_path);
+            
+            let label1 = format!("{}/{}", file1.display(), rel_path.display());
+            let label2 = format!("{}/{}", file2.display(), rel_path.display());
+
+            if in_1 && in_2 {
+                let c1 = std::fs::read_to_string(&p1).unwrap_or_default();
+                let c2 = std::fs::read_to_string(&p2).unwrap_or_default();
+                
+                let opts = DiffOptions {
+                    ignore_case: shared.ignore_case,
+                    ignore_all_space: shared.ignore_all_space,
+                    ignore_space_change,
+                    ignore_trailing_space,
+                    ignore_blank_lines,
+                    ignore_keys: vec![],
+                    ignore_keywords: vec![],
+                };
+
+                let res = literal_diff(&c1, &c2, &opts);
+                let identical = res.additions.is_empty() && res.deletions.is_empty() && res.modifications.is_empty();
+                
+                if !identical {
+                    all_identical = false;
+                    if brief {
+                        println!("Files {} and {} differ", label1, label2);
+                    } else if unified {
+                        println!("Files {} and {} differ (unified diff not shown in recursive mode)", label1, label2);
+                    } else {
+                        println!("\n▶ Differences in: {}", rel_path.display());
+                        output::print_literal_diff(&res);
+                    }
+                } else if report_identical_files {
+                    println!("Files {} and {} are identical", label1, label2);
+                }
+            } else if in_1 {
+                all_identical = false;
+                println!("▶ Orphan: {} (exists only in {})", rel_path.display(), file1.display());
+            } else {
+                all_identical = false;
+                println!("▶ Orphan: {} (exists only in {})", rel_path.display(), file2.display());
+            }
+        }
+        
+        for w in warnings {
+            eprintln!("Warning: {}", w);
+        }
+
+        return Ok(all_identical);
+    }
+
     let content1 = std::fs::read_to_string(file1)
         .map_err(|e| QarenError::from_io_with_path(e, file1.to_path_buf()))?;
     let content2 = std::fs::read_to_string(file2)
@@ -269,7 +313,7 @@ fn handle_kv_command(
     d1: Option<&str>,
     d2: Option<&str>,
     strip_quotes: bool,
-    shared: &crate::commands::SharedDiffOptions,
+    recursive: bool,
     output_format: &str,
     ignore_keys: Vec<String>,
     ignore_keywords: Vec<String>,
@@ -277,27 +321,148 @@ fn handle_kv_command(
     summary: bool,
     show_secrets: bool,
     verbose: bool,
-    generate_missing: Option<&Path>,
+    generate_patch: Option<&Path>,
+    mask_patches: bool,
     direction: &str,
+    shared: &crate::commands::SharedDiffOptions,
 ) -> Result<bool, QarenError> {
     // Validate --direction without --generate-missing
-    if generate_missing.is_none() && direction != "source-to-target" {
+    if generate_patch.is_none() && direction != "source-to-target" {
         return Err(QarenError::InvalidArguments(
-            "--direction requires --generate-missing (-g)".to_string(),
+            "--direction requires --generate-patch (-g)".to_string(),
         ));
     }
 
-    // Read raw file content for auto-detection
-    let content1 = std::fs::read_to_string(file1)
-        .map_err(|e| QarenError::from_io_with_path(e, file1.to_path_buf()))?;
-    let content2 = std::fs::read_to_string(file2)
-        .map_err(|e| QarenError::from_io_with_path(e, file2.to_path_buf()))?;
+    // Read raw file content for auto-detection (only if not recursive, or wait, if recursive we don't read yet)
+    let content1 = if !recursive { std::fs::read_to_string(file1).map_err(|e| QarenError::from_io_with_path(e, file1.to_path_buf()))? } else { String::new() };
+    let content2 = if !recursive { std::fs::read_to_string(file2).map_err(|e| QarenError::from_io_with_path(e, file2.to_path_buf()))? } else { String::new() };
 
-    // Resolve delimiter independently for each file
-    let delim1 = resolve_delimiter(d1, delimiter, &content1)?;
-    let delim2 = resolve_delimiter(d2, delimiter, &content2)?;
+    let delim1_opt = if !recursive { Some(resolve_delimiter(d1, delimiter, &content1)?) } else { resolve_delimiter(d1, delimiter, "").ok() };
+    let delim2_opt = if !recursive { Some(resolve_delimiter(d2, delimiter, &content2)?) } else { resolve_delimiter(d2, delimiter, "").ok() };
+
+
+    // Build diff options
+    let diff_opts = DiffOptions {
+        ignore_case: shared.ignore_case,
+        ignore_all_space: shared.ignore_all_space,
+        ignore_space_change: false,
+        ignore_trailing_space: false,
+        ignore_blank_lines: false,
+        ignore_keys: ignore_keys.clone(),
+        ignore_keywords: ignore_keywords.clone(),
+    };
+
+    if recursive {
+        let dir_opts1 = DirParseOptions {
+            delimiter: delim1_opt,
+            strip_quotes,
+            ..DirParseOptions::default()
+        };
+        let dir_opts2 = DirParseOptions {
+            delimiter: delim2_opt,
+            strip_quotes,
+            ..DirParseOptions::default()
+        };
+
+        if verbose && !quiet {
+            println!("[INFO] Recursive scan of file1: {}", file1.display());
+            println!("[INFO] Recursive scan of file2: {}", file2.display());
+        }
+
+        let dir_diff = semantic_diff_dir(file1, file2, &dir_opts1, &dir_opts2, &diff_opts);
+
+        if output_format == "json" {
+            println!("{}", serde_json::to_string_pretty(&dir_diff).unwrap());
+        } else if !quiet {
+            use colored::Colorize;
+            
+            for warning in &dir_diff.traversal_warnings {
+                eprintln!("{}: {}", "⚠ Warning".yellow().bold(), warning);
+            }
+
+            if summary {
+                let l1 = file1.display().to_string().red();
+                let l2 = file2.display().to_string().green();
+                println!("\n── {} vs {} (Recursive) ──", l1, l2);
+                
+                let mut identical_count = 0;
+                let mut modified_count = 0;
+                let mut orphan_source = 0;
+                let mut orphan_target = 0;
+                
+                for status in dir_diff.files.values() {
+                    match status {
+                        FileDiffStatus::Identical => identical_count += 1,
+                        FileDiffStatus::Modified(_) => modified_count += 1,
+                        FileDiffStatus::OrphanInSource(_) => orphan_source += 1,
+                        FileDiffStatus::OrphanInTarget(_) => orphan_target += 1,
+                        _ => {}
+                    }
+                }
+                
+                println!(
+                    "Summary: {} identical files, {} files only in {}, {} files only in {}, {} modified files",
+                    identical_count,
+                    orphan_source, file1.display().to_string().red(),
+                    orphan_target, file2.display().to_string().green(),
+                    modified_count
+                );
+                println!();
+            } else {
+                let mut sorted_paths: Vec<_> = dir_diff.files.keys().collect();
+                sorted_paths.sort();
+                
+                for path in sorted_paths {
+                    let status = &dir_diff.files[path];
+                    match status {
+                        FileDiffStatus::Modified(diff) => {
+                            let label1 = format!("{}/{}", file1.display(), path.display());
+                            let label2 = format!("{}/{}", file2.display(), path.display());
+                            println!("\n▶ Modified File: {}", path.display());
+                            output::print_diff_result(diff, show_secrets, verbose, &label1, &label2);
+                        }
+                        FileDiffStatus::OrphanInSource(_) => {
+                            println!("▶ Orphan: {} (exists only in {})", path.display().to_string().red(), file1.display());
+                        }
+                        FileDiffStatus::OrphanInTarget(_) => {
+                            println!("▶ Orphan: {} (exists only in {})", path.display().to_string().green(), file2.display());
+                        }
+                        FileDiffStatus::Error(e) => {
+                            eprintln!("▶ Error processing {}: {}", path.display(), e);
+                        }
+                        _ => {} // Skip Identical and NotAKvFile in non-verbose, or handle them
+                    }
+                }
+            }
+        }
+
+        if let Some(output_path) = generate_patch {
+            let patch_direction: PatchDirection = direction.parse().map_err(QarenError::InvalidArguments)?;
+            let patch_opts1 = ParseOptions { delimiter: delim1_opt.unwrap_or('='), strip_quotes, ..ParseOptions::default() };
+            let patch_opts2 = ParseOptions { delimiter: delim2_opt.unwrap_or('='), strip_quotes, ..ParseOptions::default() };
+            
+            let created_files = qaren_core::generate_recursive_patch(&dir_diff, output_path, &patch_opts1, &patch_opts2, patch_direction, mask_patches)?;
+            if !quiet {
+                println!("\nGenerated {} recursive patch files under {}", created_files.len(), output_path.display());
+            }
+        }
+        
+        if !dir_diff.traversal_warnings.is_empty() {
+            return Err(QarenError::Io(std::io::Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                "Directory traversal encountered permission or I/O errors",
+            )));
+        }
+
+        return Ok(dir_diff.is_identical());
+    }
+
+    // --- Non-recursive mode (original logic) ---
 
     // Build per-file parse options
+    let delim1 = delim1_opt.unwrap();
+    let delim2 = delim2_opt.unwrap();
+
     let opts1 = ParseOptions {
         delimiter: delim1,
         strip_quotes,
@@ -395,42 +560,34 @@ fn handle_kv_command(
             }
         }
 
+        if let Some(output_path) = generate_patch {
+            let patch_direction = direction.parse::<PatchDirection>()
+                .map_err(QarenError::InvalidArguments)?;
+            
+            let patch_opts1 = ParseOptions {
+                delimiter: opts1.delimiter,
+                strip_quotes: opts1.strip_quotes,
+                comment_prefixes: opts1.comment_prefixes.clone(),
+                ignore_case: opts1.ignore_case,
+            };
+            let patch_opts2 = ParseOptions {
+                delimiter: opts2.delimiter,
+                strip_quotes: opts2.strip_quotes,
+                comment_prefixes: opts2.comment_prefixes.clone(),
+                ignore_case: opts2.ignore_case,
+            };
+
+            let created_files = qaren_core::generate_patch(&diff_result, output_path, &patch_opts1, &patch_opts2, patch_direction, mask_patches)?;
+            if !quiet {
+                println!("\nGenerated {} patch file(s) for missing keys.", created_files.len());
+            }
+        }
+
         if !summary && d1.is_none() && d2.is_none() && delimiter.is_none() && delim1 != delim2 {
             eprintln!(
                 "  ℹ auto-detected delimiters: '{}' for {}, '{}' for {}",
                 delim1, label1, delim2, label2
             );
-        }
-    }
-
-    // Generate patch if requested
-    if let Some(output_path) = generate_missing {
-        let patch_direction: PatchDirection = direction
-            .parse()
-            .map_err(QarenError::InvalidArguments)?;
-
-        let patch_opts1 = ParseOptions {
-            delimiter: delim1,
-            strip_quotes,
-            ..ParseOptions::default()
-        };
-        let patch_opts2 = ParseOptions {
-            delimiter: delim2,
-            strip_quotes,
-            ..ParseOptions::default()
-        };
-
-        let created_files = generate_patch(&diff_result, output_path, &patch_opts1, &patch_opts2, patch_direction)?;
-
-        if !quiet {
-            eprintln!();
-            if created_files.is_empty() {
-                eprintln!("  ℹ No missing keys found. No patch file created.");
-            } else {
-                for path in &created_files {
-                    eprintln!("✔ Patch file created: {}", path.display());
-                }
-            }
         }
     }
 

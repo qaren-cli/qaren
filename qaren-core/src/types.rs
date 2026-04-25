@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 /// Represents a single key-value pair from a configuration file.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct KvPair {
     /// The key (left side of delimiter)
     pub key: String,
@@ -19,7 +19,7 @@ pub struct KvPair {
 }
 
 /// Represents a warning encountered during parsing.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct ParseWarning {
     /// The key associated with the warning (if any)
     pub key: Option<String>,
@@ -28,7 +28,7 @@ pub struct ParseWarning {
 }
 
 /// Represents a parsed configuration file as a HashMap for O(1) lookups.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct ConfigFile {
     /// Key-value pairs stored in a HashMap for O(1) lookup.
     /// Key: configuration key, Value: (value, line_number)
@@ -43,7 +43,7 @@ pub struct ConfigFile {
 ///
 /// Controls how the parser interprets configuration file content:
 /// delimiter selection, quote handling, and comment detection.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct ParseOptions {
     /// Delimiter character between key and value (default: `'='`)
     pub delimiter: char,
@@ -67,7 +67,7 @@ impl Default for ParseOptions {
 }
 
 /// Represents the result of a semantic comparison between two configuration files.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct DiffResult {
     /// Keys present in file1 but missing in file2
     pub missing_in_file2: Vec<KvPair>,
@@ -99,7 +99,7 @@ impl DiffResult {
 ///
 /// These are separate from [`ParseOptions`] because they apply **after**
 /// parsing — the raw parsed values are always stored unchanged.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize)]
 pub struct DiffOptions {
     /// Compare values case-insensitively (-i)
     pub ignore_case: bool,
@@ -137,7 +137,7 @@ impl DiffOptions {
 
 
 /// Represents a key-value pair that differs between two files.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct ModifiedPair {
     /// The shared key
     pub key: String,
@@ -152,7 +152,7 @@ pub struct ModifiedPair {
 }
 
 /// Represents the result of a literal (line-by-line) diff.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct LiteralDiffResult {
     /// Lines added in file2
     pub additions: Vec<DiffLine>,
@@ -163,7 +163,7 @@ pub struct LiteralDiffResult {
 }
 
 /// A single line from a diff result.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct DiffLine {
     /// The content of the line
     pub content: String,
@@ -172,7 +172,7 @@ pub struct DiffLine {
 }
 
 /// Direction for patch file generation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize)]
 pub enum PatchDirection {
     /// Generate patch with keys from file1 missing in file2 (default)
     #[default]
@@ -292,5 +292,40 @@ mod tests {
         let result = "invalid".parse::<PatchDirection>();
         assert!(result.is_err());
         assert!(result.err().map_or(false, |e| e.contains("Invalid direction")));
+    }
+}
+
+/// Status of a file during recursive directory diffing.
+#[derive(Debug, Clone, serde::Serialize)]
+pub enum FileDiffStatus {
+    /// File exists in both and is semantically identical
+    Identical,
+    /// File exists in both but has semantic differences
+    Modified(DiffResult),
+    /// File only exists in the source directory
+    OrphanInSource(ConfigFile),
+    /// File only exists in the target directory
+    OrphanInTarget(ConfigFile),
+    /// File could not be parsed as a KV file or produced no pairs
+    NotAKvFile(std::path::PathBuf),
+    /// Error reading or processing the file
+    Error(String),
+}
+
+/// Result of a recursive directory semantic comparison.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct DirDiffResult {
+    /// Mapping from relative file path to its diff status
+    pub files: HashMap<PathBuf, FileDiffStatus>,
+    /// Any warnings or errors encountered during traversal (e.g. permission denied)
+    pub traversal_warnings: Vec<String>,
+}
+
+impl DirDiffResult {
+    /// Returns true if all files are identical and there are no orphans
+    pub fn is_identical(&self) -> bool {
+        self.files.values().all(|status| {
+            matches!(status, FileDiffStatus::Identical | FileDiffStatus::NotAKvFile(_))
+        })
     }
 }

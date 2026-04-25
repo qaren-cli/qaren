@@ -59,17 +59,46 @@ pub fn detect_delimiter(content: &str) -> char {
     }
 }
 
+const MAX_FILE_SIZE: u64 = 50 * 1024 * 1024; // 50MB
+
 /// Parse a configuration file from disk with the given options.
 ///
 /// Reads the file into memory and delegates to [`parse_content`].
-/// Returns a contextual error if the file cannot be read.
+/// Returns a contextual error if the file cannot be read or is too large.
 pub fn parse_file(
     file_path: &Path,
     options: &ParseOptions,
 ) -> QarenResult<ConfigFile> {
+    let metadata = std::fs::metadata(file_path)
+        .map_err(|e| QarenError::from_io_with_path(e, file_path.to_path_buf()))?;
+        
+    if metadata.len() > MAX_FILE_SIZE {
+        return Err(QarenError::ParseError {
+            path: file_path.to_path_buf(),
+            line: 0,
+            reason: format!("File size exceeds {}MB limit", MAX_FILE_SIZE / 1_000_000),
+        });
+    }
+
     let content = std::fs::read_to_string(file_path)
         .map_err(|e| QarenError::from_io_with_path(e, file_path.to_path_buf()))?;
-    parse_content(&content, file_path, options)
+        
+    #[allow(unused_mut)]
+    let mut config = parse_content(&content, file_path, options)?;
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mode = metadata.permissions().mode();
+        if mode & 0o077 != 0 {
+            config.warnings.push(ParseWarning {
+                key: None,
+                message: format!("Insecure file permissions ({:o})", mode & 0o777),
+            });
+        }
+    }
+
+    Ok(config)
 }
 
 

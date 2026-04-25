@@ -709,7 +709,7 @@ mod patch_chaos {
             &bad_path,
             &ParseOptions::default(),
             &ParseOptions::default(),
-            PatchDirection::SourceToTarget,
+            PatchDirection::SourceToTarget, false,
         );
         assert!(result.is_err());
     }
@@ -725,7 +725,7 @@ mod patch_chaos {
             vec![],
         );
         let opts = ParseOptions::default();
-        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::SourceToTarget)
+        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::SourceToTarget, false)
             .expect("should succeed");
 
         let content = std::fs::read_to_string(&paths[0]).expect("read");
@@ -748,7 +748,7 @@ mod patch_chaos {
             vec![],
         );
         let opts = ParseOptions::default();
-        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::SourceToTarget)
+        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::SourceToTarget, false)
             .expect("should succeed");
 
         // Re-parse the generated patch
@@ -781,7 +781,7 @@ mod patch_chaos {
         let output = tmp.path().join("empty_bi.env");
         let diff = make_diff(vec![], vec![]);
         let opts = ParseOptions::default();
-        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::Bidirectional)
+        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::Bidirectional, false)
             .expect("should succeed");
 
         assert_eq!(paths.len(), 0);
@@ -801,7 +801,7 @@ mod patch_chaos {
             delimiter: ':',
             ..ParseOptions::default()
         };
-        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::SourceToTarget)
+        let paths = generate_patch(&diff, &output, &opts, &opts, PatchDirection::SourceToTarget, false)
             .expect("should succeed");
 
         let content = std::fs::read_to_string(&paths[0]).expect("read");
@@ -948,7 +948,7 @@ mod e2e_attack_scenarios {
             &patch_path,
             &opts,
             &opts,
-            PatchDirection::Bidirectional,
+            PatchDirection::Bidirectional, false,
         )
         .expect("generate patch");
 

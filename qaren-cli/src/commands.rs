@@ -62,7 +62,7 @@ pub struct Cli {
     pub example: bool,
 
     /// Generate shell completion scripts [possible values: bash, elvish, fish, powershell, zsh]
-    #[arg(long = "generate-completions", value_name = "SHELL", hide = true)]
+    #[arg(long = "generate-completions", value_name = "SHELL")]
     pub generate_completions: Option<Shell>,
 }
 
@@ -98,6 +98,10 @@ pub enum Commands {
         /// Ignore changes where lines are all blank
         #[arg(short = 'B', long)]
         ignore_blank_lines: bool,
+
+        /// Recursively compare directories  [short: -r]
+        #[arg(short = 'r', long)]
+        recursive: bool,
 
         /// Report only when files differ
         #[arg(short = 'q', long)]
@@ -142,6 +146,11 @@ pub enum Commands {
 
         #[command(flatten)]
         shared: SharedDiffOptions,
+        
+        /// Recursively compare directories containing Key-Value files  [short: -r]
+        #[arg(short = 'r', long)]
+        recursive: bool,
+
         /// Output format (text or json)
         #[arg(short = 'o', long, default_value = "text", value_name = "FORMAT")]
         output: String,
@@ -169,12 +178,20 @@ pub enum Commands {
         /// Show identical keys in output as well (hidden by default)  [short: -v]
         #[arg(short = 'v', long, conflicts_with_all = ["quiet", "summary"])]
         verbose: bool,
-        /// Generate a patch file with missing keys  [short: -g]
+        /// Generate a patch file containing missing keys [short: -g]
         #[arg(short = 'g', long, value_name = "FILE")]
-        generate_missing: Option<PathBuf>,
+        generate_patch: Option<PathBuf>,
 
-        /// Patch direction: source-to-target (default), target-to-source, bidirectional
-        /// Only valid when --generate-missing / -g is specified.
+        /// Mask secrets in generated patch files. By default, patches contain real values
+        /// to allow easy synchronization. Use this flag to redact sensitive values
+        /// with ***MASKED*** before sharing patches securely.
+        #[arg(long, requires = "generate_patch")]
+        mask_patches: bool,
+
+        /// Direction for patch generation.
+        /// 'source-to-target' (default): keys in FILE1 missing from FILE2.
+        /// 'target-to-source': keys in FILE2 missing from FILE1.
+        /// 'bidirectional': creates two patch files, one for each direction.
         #[arg(long, default_value = "source-to-target", value_name = "DIR")]
         direction: String,
     },
