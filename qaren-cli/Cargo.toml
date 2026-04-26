@@ -1,6 +1,6 @@
 [package]
 name = "qaren"
-version = "0.3.9"
+version = "0.3.10"
 edition = "2021"
 authors = ["Aly Esmaeil<alyesmaeil.g@gmail.com>"]
 description = "A blazingly fast, secure, offline configuration comparison tool."
@@ -15,7 +15,7 @@ name = "qaren"
 path = "src/main.rs"
 
 [dependencies]
-qaren-core = { version = "0.3.9", path = "../qaren-core" }
+qaren-core = { version = "0.3.10", path = "../qaren-core" }
 clap = { version = "4.5", features = ["derive"] }
 colored = "2.1"
 similar = "3.1.0"
