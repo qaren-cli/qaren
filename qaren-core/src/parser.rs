@@ -234,7 +234,7 @@ pub fn strip_ansi(input: &str) -> String {
                 let b = bytes[i];
                 i += 1;
                 // Terminal characters for CSI sequences are typically in the range 0x40-0x7E
-                if b >= 0x40 && b <= 0x7E {
+                if (0x40..=0x7E).contains(&b) {
                     break;
                 }
             }
