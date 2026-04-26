@@ -28,4 +28,4 @@ repro_ansi.py
 
 
 # AI files
-.agen*
+.agents/
