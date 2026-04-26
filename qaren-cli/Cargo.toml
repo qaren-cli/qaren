@@ -11,6 +11,9 @@ keywords = ["cli", "diff", "devops", "env", "configuration"]
 categories = ["command-line-utilities", "development-tools"]
 readme = "README.md"
 
+[package.metadata.dist]
+dist = true
+
 [[bin]]
 name = "qaren"
 path = "src/main.rs"
