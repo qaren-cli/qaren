@@ -126,6 +126,13 @@ jobs:
         if: matrix.use_cross
         uses: taiki-e/install-action@cross
 
+      - name: Install cargo-deb and cargo-generate-rpm
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        run: |
+          cargo install cargo-deb
+          cargo install cargo-generate-rpm
+        shell: bash
+
       - name: Build Binary
         run: |
           if [ "${{ matrix.use_cross }}" == "true" ]; then
@@ -133,6 +140,17 @@ jobs:
           else
             cargo build --release --target ${{ matrix.target }}
           fi
+        shell: bash
+
+      - name: Build DEB and RPM
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        run: |
+          cd qaren-cli
+          cargo deb --target x86_64-unknown-linux-gnu --no-build
+          cargo generate-rpm --target x86_64-unknown-linux-gnu
+          mv target/x86_64-unknown-linux-gnu/debian/*.deb ../qaren-amd64.deb
+          mv target/generate-rpm/*.rpm ../qaren-amd64.rpm
+          cd ..
         shell: bash
 
       - name: Package Release (Linux/macOS)
@@ -150,8 +168,12 @@ jobs:
           cd ../../..
         shell: powershell
 
-      - name: Upload Release Asset
+      - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.asset_name }}
+          files: |
+            ${{ matrix.asset_name }}
+            *.deb
+            *.rpm
           generate_release_notes: true
+          overwrite_files: true

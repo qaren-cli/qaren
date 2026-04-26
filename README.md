@@ -78,16 +78,20 @@ Comparing JSON logs in KV mode? Use `-D` to suppress duplicate key warnings and 
 ## 📥 Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/qaren.git
-cd qaren
-
-# Build the release binary
-cargo build --release
-
-# The binary will be available at ./target/release/qaren
+# Install instantly (Linux & macOS)
+curl -sSfL qaren.me/install | bash
 ```
-*(Coming soon to Cargo and Homebrew)*
+
+### Alternative Methods
+```bash
+# Via Cargo
+cargo install qaren
+
+# From Source
+git clone https://github.com/qaren-cli/qaren.git
+cd qaren
+cargo build --release
+```
 
 ---
 
