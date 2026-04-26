@@ -296,7 +296,7 @@ jobs:
       - host
     runs-on: "ubuntu-22.04"
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
       PLAN: ${{ needs.plan.outputs.val }}
       GITHUB_USER: "axo bot"
       GITHUB_EMAIL: "admin+bot@axo.dev"
