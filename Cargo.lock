@@ -449,7 +449,7 @@ dependencies = [
 
 [[package]]
 name = "qaren"
-version = "0.3.6"
+version = "0.3.10"
 dependencies = [
  "assert_cmd",
  "clap",
@@ -465,7 +465,7 @@ dependencies = [
 
 [[package]]
 name = "qaren-core"
-version = "0.3.6"
+version = "0.3.10"
 dependencies = [
  "quickcheck",
  "quickcheck_macros",

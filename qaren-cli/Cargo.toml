@@ -5,6 +5,7 @@ edition = "2021"
 authors = ["Aly Esmaeil<alyesmaeil.g@gmail.com>"]
 description = "A blazingly fast, secure, offline configuration comparison tool."
 repository = "https://github.com/qaren-cli/qaren.git"
+homepage = "https://qaren.me"
 license = "MIT"
 keywords = ["cli", "diff", "devops", "env", "configuration"]
 categories = ["command-line-utilities", "development-tools"]
