@@ -1,15 +1,27 @@
-# Rust build artifacts
-/target
-debug/
-*.pdb
+# Rust
+target/
+Cargo.lock
 
-# IDE
-.idea/
+# IDEs
 .vscode/
+.idea/
 *.swp
 *.swo
-*~
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Qaren Temporary/Test Files
+*.env
+*.test
+*.log
+scratch/
+release*/
+reales/
+*.o
+*.rcgu.o
+
+# Python repro scripts
+kv_bug_repro*.py
+repro_ansi.py

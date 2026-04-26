@@ -2,7 +2,11 @@
 name = "qaren-core"
 version = "0.3.6"
 edition = "2021"
+authors = ["Aly Esmaeil<alyesmaeil.g@gmail.com>"]
 description = "Core library for Qaren configuration comparison tool"
+repository = "https://github.com/qaren-cli/qaren.git"
+license = "MIT"
+readme = "README.md"
 
 [dependencies]
 thiserror = "2.0"
