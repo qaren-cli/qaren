@@ -40,7 +40,7 @@ pub mod types;
 // Re-export key types for ergonomic imports:
 //   use qaren_core::{parse_file, semantic_diff, generate_patch, ...};
 
-pub use diff::{literal_diff, semantic_diff};
+pub use diff::{literal_diff, normalise, semantic_diff};
 pub use directory::{collect_files_recursive, semantic_diff_dir, DirParseOptions};
 pub use error::{QarenError, QarenResult};
 pub use masking::{mask_value, should_mask};

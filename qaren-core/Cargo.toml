@@ -1,6 +1,6 @@
 [package]
 name = "qaren-core"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Core library for Qaren configuration comparison tool"
 
@@ -8,6 +8,7 @@ description = "Core library for Qaren configuration comparison tool"
 thiserror = "2.0"
 similar = "2.6"
 serde = { version = "1.0.228", features = ["derive"] }
+rayon = "1.10"
 
 [dev-dependencies]
 quickcheck = "1.0"

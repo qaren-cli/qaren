@@ -107,12 +107,16 @@ pub enum Commands {
         #[arg(long, requires = "recursive")]
         files_only: bool,
 
-        /// Report only when files differ
-        #[arg(short = 'q', long)]
+        /// Report only when files differ (POSIX diff -q)
+        #[arg(short = 'q', long, conflicts_with = "quiet")]
         brief: bool,
 
-        /// Report when two files are the same
-        #[arg(short = 's', long)]
+        /// Quiet mode - no output. Return exit code only.
+        #[arg(long, conflicts_with = "brief")]
+        quiet: bool,
+
+        /// Report when two files are the same (POSIX diff -s)
+        #[arg(short = 's', long, conflicts_with = "quiet")]
         report_identical_files: bool,
 
         #[command(flatten)]

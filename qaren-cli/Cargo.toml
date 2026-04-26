@@ -1,8 +1,14 @@
 [package]
-name = "qaren-cli"
-version = "0.1.0"
+name = "qaren"
+version = "0.2.0"
 edition = "2021"
-description = "CLI application for Qaren configuration comparison tool"
+authors = ["Aly Esmaeil<alyesmaeil.g@gmail.com>"]
+description = "A blazingly fast, secure, offline configuration comparison tool."
+repository = "https://github.com/yourusername/qaren"
+license = "MIT"
+keywords = ["cli", "diff", "devops", "env", "configuration"]
+categories = ["command-line-utilities", "development-tools"]
+readme = "README.md"
 
 [[bin]]
 name = "qaren"
@@ -15,6 +21,7 @@ colored = "2.1"
 similar = "3.1.0"
 clap_complete = "4.6.2"
 serde_json = "1.0.149"
+rayon = "1.10"
 
 [dev-dependencies]
 assert_cmd = "2.0"

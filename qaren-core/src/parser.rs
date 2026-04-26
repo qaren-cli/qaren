@@ -59,7 +59,7 @@ pub fn detect_delimiter(content: &str) -> char {
     }
 }
 
-const MAX_FILE_SIZE: u64 = 50 * 1024 * 1024; // 50MB
+const MAX_FILE_SIZE: u64 = 512 * 1024 * 1024; // 512MB
 
 /// Parse a configuration file from disk with the given options.
 ///
@@ -117,7 +117,10 @@ pub fn parse_content(
     let mut warnings = Vec::new();
     let file_label = file_path.file_name().and_then(|n| n.to_str()).unwrap_or("file");
 
-    for (line_idx, line) in content.lines().enumerate() {
+    let lines: Vec<_> = content.lines().enumerate().collect();
+    let mut it = lines.into_iter().peekable();
+
+    while let Some((line_idx, line)) = it.next() {
         let line_number = line_idx + 1; // 1-indexed for user display
 
         // Skip empty lines and full-line comments
@@ -126,7 +129,20 @@ pub fn parse_content(
         }
 
         // Parse key-value pair; malformed lines are silently skipped
-        if let Some((key, value)) = parse_line(line, options) {
+        if let Some((key, mut value)) = parse_line(line, options) {
+            // Multi-line support: if value ends with \, join with next line(s)
+            while value.ends_with('\\') {
+                if let Some((_, next_line)) = it.peek() {
+                    // Peeked line exists, join it
+                    value.pop(); // Remove the continuation backslash
+                    value.push_str(next_line.trim());
+                    it.next(); // Consume the joined line
+                } else {
+                    // No next line, keep the backslash as a literal
+                    break;
+                }
+            }
+
             if let Some((_, old_line)) = pairs.get(&key) {
                 let msg = format!("duplicate key '{}' detected in {} (overwriting line {} with line {})", key, file_label, old_line, line_number);
                 warnings.push(ParseWarning {
@@ -745,13 +761,22 @@ mod property_tests {
         Some(clean)
     }
 
-    /// A value that doesn't contain newlines, control chars, or the inline comment pattern
+    /// A value that doesn't contain newlines, control chars, or the inline comment pattern.
+    /// Also avoid ending with a backslash to prevent accidental multi-line joining in property tests.
     fn sanitize_value(s: &str) -> String {
         let clean: String = s.chars()
             .filter(|c| is_safe_char(*c) && *c != '#' && *c != '/')
             .collect();
             
-        clean.trim().to_string()
+        let mut trimmed = clean.trim().to_string();
+        while trimmed.ends_with('\\') || trimmed.ends_with(' ') {
+            if trimmed.ends_with('\\') {
+                trimmed.pop();
+            } else {
+                trimmed = trimmed.trim_end().to_string();
+            }
+        }
+        trimmed
     }
 
     // ── Property 2: First-Delimiter-Only Splitting ──────────────────

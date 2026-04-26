@@ -506,15 +506,21 @@ mod property_tests {
     }
 
     /// Sanitize value
-    /// Sanitize value
     fn sanitize_value(s: &str) -> String {
         let clean: String = s.chars()
             .filter(|c| is_safe_char(*c) && *c != '#' && *c != '/')
             .collect();
-            
-        clean.trim().to_string()
-    }
 
+        let mut trimmed = clean.trim().to_string();
+        while trimmed.ends_with('\\') || trimmed.ends_with(' ') {
+            if trimmed.ends_with('\\') {
+                trimmed.pop();
+            } else {
+                trimmed = trimmed.trim_end().to_string();
+            }
+        }
+        trimmed
+    }
     /// Build a ConfigFile from raw pairs (deduplicates)
     fn build_config(raw_pairs: &[(String, String)]) -> ConfigFile {
         let mut map = HashMap::new();
@@ -711,4 +717,3 @@ mod property_tests {
         TestResult::passed()
     }
 }
-

@@ -23,11 +23,11 @@ use commands::{validate_delimiter, Cli, Commands};
 use config::load_config;
 use qaren_core::{
     collect_files_recursive, detect_delimiter, literal_diff, parse_file, semantic_diff,
-    semantic_diff_dir, DiffOptions, DirParseOptions, FileDiffStatus, ParseOptions, PatchDirection,
+    semantic_diff_dir, DiffOptions, DirParseOptions, FileDiffStatus, LiteralDiffResult, ParseOptions, PatchDirection,
     QarenError,
 };
 use std::collections::HashSet;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process;
 
 fn main() {
@@ -93,7 +93,7 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
     }
 
     match cli.command {
-        Some(Commands::Diff { file1, file2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, recursive, files_only, brief, report_identical_files, shared }) => {
+        Some(Commands::Diff { file1, file2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, recursive, files_only, brief, quiet, report_identical_files, shared }) => {
             let (f1, f2) = match (file1, file2) {
                 (Some(f1), Some(f2)) => (f1, f2),
                 _ => {
@@ -105,7 +105,7 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
                     std::process::exit(2);
                 }
             };
-            let identical = handle_diff_command(&f1, &f2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, recursive, files_only, brief, report_identical_files, &shared)?;
+            let identical = handle_diff_command(&f1, &f2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, recursive, files_only, brief, quiet, report_identical_files, &shared)?;
             Ok((identical, cfg))
         }
         Some(Commands::Kv {
@@ -160,6 +160,7 @@ fn handle_diff_command(
     recursive: bool,
     files_only: bool,
     brief: bool,
+    quiet: bool,
     report_identical_files: bool,
     shared: &crate::commands::SharedDiffOptions,
 ) -> Result<bool, QarenError> {
@@ -171,62 +172,103 @@ fn handle_diff_command(
         collect_files_recursive(file1, file1, &mut files1, &mut warnings);
         collect_files_recursive(file2, file2, &mut files2, &mut warnings);
 
-        let all_files: HashSet<&std::path::PathBuf> = files1.union(&files2).collect();
+        let all_files: HashSet<&PathBuf> = files1.union(&files2).collect();
         let mut sorted_files: Vec<_> = all_files.into_iter().collect();
         sorted_files.sort();
 
-        let mut all_identical = true;
+        let opts = DiffOptions {
+            ignore_case: shared.ignore_case,
+            ignore_all_space: shared.ignore_all_space,
+            ignore_space_change,
+            ignore_trailing_space,
+            ignore_blank_lines,
+            ignore_keys: vec![],
+            ignore_keywords: vec![],
+        };
 
-        for rel_path in sorted_files {
-            let in_1 = files1.contains(rel_path);
-            let in_2 = files2.contains(rel_path);
+        use rayon::prelude::*;
+        
+        let results: Vec<(bool, Option<LiteralDiffResult>, String, String)> = sorted_files.par_iter().map(|rel_path| {
+            let in_1 = files1.contains(*rel_path);
+            let in_2 = files2.contains(*rel_path);
             
-            let p1 = file1.join(rel_path);
-            let p2 = file2.join(rel_path);
+            let p1 = file1.join(*rel_path);
+            let p2 = file2.join(*rel_path);
             
             let label1 = format!("{}/{}", file1.display(), rel_path.display());
             let label2 = format!("{}/{}", file2.display(), rel_path.display());
 
             if in_1 && in_2 {
                 if files_only {
-                    continue;
+                    return (true, None, String::new(), String::new());
+                }
+
+                // Metadata check short-circuit
+                let m1 = std::fs::metadata(&p1).ok();
+                let m2 = std::fs::metadata(&p2).ok();
+                
+                let can_short_circuit_on_size = !opts.ignore_case && !opts.ignore_all_space && !opts.ignore_space_change 
+                    && !opts.ignore_trailing_space && !opts.ignore_blank_lines;
+
+                if can_short_circuit_on_size {
+                    if let (Some(m1), Some(m2)) = (m1, m2) {
+                        if m1.len() != m2.len() {
+                            if brief && !quiet {
+                                return (false, None, format!("Files {} and {} differ", label1, label2), String::new());
+                            } else if quiet {
+                                return (false, None, String::new(), String::new());
+                            }
+                        }
+                    }
                 }
 
                 let c1 = std::fs::read_to_string(&p1).unwrap_or_default();
                 let c2 = std::fs::read_to_string(&p2).unwrap_or_default();
                 
-                let opts = DiffOptions {
-                    ignore_case: shared.ignore_case,
-                    ignore_all_space: shared.ignore_all_space,
-                    ignore_space_change,
-                    ignore_trailing_space,
-                    ignore_blank_lines,
-                    ignore_keys: vec![],
-                    ignore_keywords: vec![],
-                };
+                if c1 == c2 {
+                    if report_identical_files && !quiet {
+                        return (true, None, format!("Files {} and {} are identical", label1, label2), String::new());
+                    }
+                    return (true, None, String::new(), String::new());
+                }
 
                 let res = literal_diff(&c1, &c2, &opts);
                 let identical = res.additions.is_empty() && res.deletions.is_empty() && res.modifications.is_empty();
                 
                 if !identical {
-                    all_identical = false;
-                    if brief {
-                        println!("Files {} and {} differ", label1, label2);
+                    if quiet {
+                        return (false, None, String::new(), String::new());
+                    } else if brief {
+                        return (false, None, format!("Files {} and {} differ", label1, label2), String::new());
                     } else if unified {
-                        println!("Files {} and {} differ (unified diff not shown in recursive mode)", label1, label2);
+                        return (false, None, format!("Files {} and {} differ (unified diff not shown in recursive mode)", label1, label2), String::new());
                     } else {
-                        println!("\n▶ Differences in: {}", rel_path.display());
-                        output::print_literal_diff(&res);
+                        return (false, Some(res), String::new(), rel_path.display().to_string());
                     }
-                } else if report_identical_files {
-                    println!("Files {} and {} are identical", label1, label2);
+                } else if report_identical_files && !quiet {
+                    return (true, None, format!("Files {} and {} are identical", label1, label2), String::new());
                 }
             } else if in_1 {
-                all_identical = false;
-                println!("▶ Orphan: {} (exists only in {})", rel_path.display(), file1.display());
+                let msg = if quiet { String::new() } else { format!("▶ Orphan: {} (exists only in {})", rel_path.display(), file1.display()) };
+                return (false, None, msg, String::new());
             } else {
+                let msg = if quiet { String::new() } else { format!("▶ Orphan: {} (exists only in {})", rel_path.display(), file2.display()) };
+                return (false, None, msg, String::new());
+            }
+            (true, None, String::new(), String::new())
+        }).collect();
+
+        let mut all_identical = true;
+        for (identical, diff_res, msg, rel_path_str) in results {
+            if !identical {
                 all_identical = false;
-                println!("▶ Orphan: {} (exists only in {})", rel_path.display(), file2.display());
+            }
+            if !msg.is_empty() {
+                println!("{}", msg);
+            }
+            if let Some(res) = diff_res {
+                println!("\n▶ Differences in: {}", rel_path_str);
+                output::print_literal_diff(&res);
             }
         }
         
@@ -237,10 +279,8 @@ fn handle_diff_command(
         return Ok(all_identical);
     }
 
-    let content1 = std::fs::read_to_string(file1)
-        .map_err(|e| QarenError::from_io_with_path(e, file1.to_path_buf()))?;
-    let content2 = std::fs::read_to_string(file2)
-        .map_err(|e| QarenError::from_io_with_path(e, file2.to_path_buf()))?;
+    let metadata1 = std::fs::metadata(file1).ok();
+    let metadata2 = std::fs::metadata(file2).ok();
 
     let opts = DiffOptions {
         ignore_case: shared.ignore_case,
@@ -252,6 +292,37 @@ fn handle_diff_command(
         ignore_keywords: vec![],
     };
 
+    // Fast-path: If no "ignore" flags are set and sizes differ, they must be different.
+    if !opts.ignore_case && !opts.ignore_all_space && !opts.ignore_space_change 
+       && !opts.ignore_trailing_space && !opts.ignore_blank_lines 
+    {
+        if let (Some(m1), Some(m2)) = (&metadata1, &metadata2) {
+            if m1.len() != m2.len() {
+                if !quiet && brief {
+                    let l1 = file1.file_name().and_then(|n| n.to_str()).unwrap_or("file1");
+                    let l2 = file2.file_name().and_then(|n| n.to_str()).unwrap_or("file2");
+                    println!("Files {} and {} differ", l1, l2);
+                }
+                return Ok(false);
+            }
+        }
+    }
+
+    let content1 = std::fs::read_to_string(file1)
+        .map_err(|e| QarenError::from_io_with_path(e, file1.to_path_buf()))?;
+    let content2 = std::fs::read_to_string(file2)
+        .map_err(|e| QarenError::from_io_with_path(e, file2.to_path_buf()))?;
+
+    // Fast-path: Exact string equality check
+    if content1 == content2 {
+        if !quiet && report_identical_files {
+            let l1 = file1.file_name().and_then(|n| n.to_str()).unwrap_or("file1");
+            let l2 = file2.file_name().and_then(|n| n.to_str()).unwrap_or("file2");
+            println!("Files {} and {} are identical", l1, l2);
+        }
+        return Ok(true);
+    }
+
     let result = literal_diff(&content1, &content2, &opts);
 
     let identical = result.additions.is_empty()
@@ -261,33 +332,90 @@ fn handle_diff_command(
     let l1 = file1.file_name().and_then(|n| n.to_str()).unwrap_or("file1");
     let l2 = file2.file_name().and_then(|n| n.to_str()).unwrap_or("file2");
 
-    if identical {
-        if report_identical_files {
+    if !quiet {
+        if identical && report_identical_files {
             println!("Files {} and {} are identical", l1, l2);
-        }
-        // POSIX diff stays silent if identical and -s is NOT provided
-    } else {
-        if brief {
-            println!("Files {} and {} differ", l1, l2);
-        } else if unified {
-            let diff = similar::TextDiff::from_lines(&content1, &content2);
-            let diff_str = diff.unified_diff().context_radius(3).header(l1, l2).to_string();
-            use colored::Colorize;
-            for line in diff_str.lines() {
-                if line.starts_with('+') && !line.starts_with("+++") {
-                    println!("{}", line.green());
-                } else if line.starts_with('-') && !line.starts_with("---") {
-                    println!("{}", line.red());
-                } else if line.starts_with("@@") {
-                    println!("{}", line.cyan());
-                } else if line.starts_with("+++") || line.starts_with("---") {
-                    println!("{}", line.bold());
+        } else if !identical {
+            if brief {
+                println!("Files {} and {} differ", l1, l2);
+            } else if unified {
+                let lines1: Vec<&str> = content1.lines().collect();
+                let lines2: Vec<&str> = content2.lines().collect();
+
+                let (norm1, norm2): (Vec<String>, Vec<String>);
+                let (refs1, refs2) = if !opts.ignore_case && !opts.ignore_all_space && !opts.ignore_space_change && !opts.ignore_trailing_space {
+                    (lines1.clone(), lines2.clone())
                 } else {
-                    println!("{}", line);
+                    norm1 = lines1.iter().map(|&l| qaren_core::normalise(l, &opts)).collect();
+                    norm2 = lines2.iter().map(|&l| qaren_core::normalise(l, &opts)).collect();
+                    (
+                        norm1.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
+                        norm2.iter().map(|s| s.as_str()).collect::<Vec<_>>()
+                    )
+                };
+
+                let diff = similar::TextDiff::from_slices(&refs1, &refs2);
+                
+                use colored::Colorize;
+                println!("--- {}", l1);
+                println!("+++ {}", l2);
+
+                for hunk in diff.grouped_ops(3) {
+                    let mut old_range = 0..0;
+                    let mut new_range = 0..0;
+                    if let Some(first) = hunk.first() {
+                        old_range.start = first.old_range().start;
+                        new_range.start = first.new_range().start;
+                    }
+                    if let Some(last) = hunk.last() {
+                        old_range.end = last.old_range().end;
+                        new_range.end = last.new_range().end;
+                    }
+                    
+                    println!("{}", format!("@@ -{},{} +{},{} @@", 
+                        old_range.start + 1, old_range.end - old_range.start,
+                        new_range.start + 1, new_range.end - new_range.start
+                    ).cyan());
+
+                    for op in hunk {
+                        match op {
+                            similar::DiffOp::Equal { old_index, len, .. } => {
+                                for i in 0..len {
+                                    println!(" {}", lines1[old_index + i]);
+                                }
+                            }
+                            similar::DiffOp::Delete { old_index, old_len, .. } => {
+                                for i in 0..old_len {
+                                    if !opts.ignore_blank_lines || !lines1[old_index + i].trim().is_empty() {
+                                        println!("{}", format!("-{}", lines1[old_index + i]).red());
+                                    }
+                                }
+                            }
+                            similar::DiffOp::Insert { new_index, new_len, .. } => {
+                                for i in 0..new_len {
+                                    if !opts.ignore_blank_lines || !lines2[new_index + i].trim().is_empty() {
+                                        println!("{}", format!("+{}", lines2[new_index + i]).green());
+                                    }
+                                }
+                            }
+                            similar::DiffOp::Replace { old_index, old_len, new_index, new_len } => {
+                                for i in 0..old_len {
+                                    if !opts.ignore_blank_lines || !lines1[old_index + i].trim().is_empty() {
+                                        println!("{}", format!("-{}", lines1[old_index + i]).red());
+                                    }
+                                }
+                                for i in 0..new_len {
+                                    if !opts.ignore_blank_lines || !lines2[new_index + i].trim().is_empty() {
+                                        println!("{}", format!("+{}", lines2[new_index + i]).green());
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
+            } else {
+                output::print_literal_diff(&result);
             }
-        } else {
-            output::print_literal_diff(&result);
         }
     }
 
@@ -646,5 +774,3 @@ fn print_error_hints(err: &QarenError) {
         }
     }
 }
-
-

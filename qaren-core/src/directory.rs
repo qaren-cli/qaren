@@ -8,6 +8,7 @@ use crate::parser::detect_delimiter;
 use crate::types::{ConfigFile, DiffOptions, DirDiffResult, FileDiffStatus, ParseOptions};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+use rayon::prelude::*;
 
 /// Options for parsing files during a directory traversal.
 #[derive(Debug, Clone)]
@@ -66,7 +67,7 @@ pub fn collect_files_recursive(
         Err(e) => warnings.push(format!("Error reading directory {}: {}", dir.display(), e)),
     }
 }
-const MAX_FILE_SIZE: u64 = 50 * 1024 * 1024; // 50MB
+const MAX_FILE_SIZE: u64 = 512 * 1024 * 1024; // 512MB
 
 fn parse_file_with_opts(path: &Path, dir_opts: &DirParseOptions) -> Result<ConfigFile, String> {
     if let Ok(metadata) = std::fs::metadata(path) {
@@ -131,62 +132,69 @@ pub fn semantic_diff_dir(
     collect_files_recursive(dir1, dir1, &mut files1, &mut traversal_warnings);
     collect_files_recursive(dir2, dir2, &mut files2, &mut traversal_warnings);
 
-    let all_files: HashSet<&PathBuf> = files1.union(&files2).collect();
-    let mut result_files = HashMap::new();
+    let all_files: HashSet<PathBuf> = files1.union(&files2).cloned().collect();
+    let all_files_vec: Vec<PathBuf> = all_files.into_iter().collect();
 
-    for rel_path in all_files {
-        let in_dir1 = files1.contains(rel_path);
-        let in_dir2 = files2.contains(rel_path);
+    let result_files: HashMap<PathBuf, FileDiffStatus> = all_files_vec
+        .into_par_iter()
+        .map(|rel_path| {
+            let in_dir1 = files1.contains(&rel_path);
+            let in_dir2 = files2.contains(&rel_path);
 
-        let path1 = dir1.join(rel_path);
-        let path2 = dir2.join(rel_path);
+            let path1 = dir1.join(&rel_path);
+            let path2 = dir2.join(&rel_path);
 
-        if in_dir1 && in_dir2 {
-            match (parse_file_with_opts(&path1, opts1), parse_file_with_opts(&path2, opts2)) {
-                (Ok(c1), Ok(c2)) => {
-                    if c1.pairs.is_empty() && c2.pairs.is_empty() {
-                        result_files.insert(rel_path.clone(), FileDiffStatus::NotAKvFile(rel_path.clone()));
-                    } else {
-                        let diff = semantic_diff(&c1, &c2, diff_opts);
-                        if diff.is_identical() {
-                            result_files.insert(rel_path.clone(), FileDiffStatus::Identical);
+            let status = if in_dir1 && in_dir2 {
+                match (parse_file_with_opts(&path1, opts1), parse_file_with_opts(&path2, opts2)) {
+                    (Ok(c1), Ok(c2)) => {
+                        if c1.pairs.is_empty() && c2.pairs.is_empty() {
+                            FileDiffStatus::NotAKvFile(rel_path.clone())
                         } else {
-                            result_files.insert(rel_path.clone(), FileDiffStatus::Modified(diff));
+                            let diff = semantic_diff(&c1, &c2, diff_opts);
+                            if diff.is_identical() {
+                                FileDiffStatus::Identical
+                            } else {
+                                FileDiffStatus::Modified(diff)
+                            }
                         }
                     }
-                }
-                (Err(e), _) | (_, Err(e)) => {
-                    result_files.insert(rel_path.clone(), FileDiffStatus::Error(e));
-                }
-            }
-        } else if in_dir1 {
-            match parse_file_with_opts(&path1, opts1) {
-                Ok(c1) => {
-                    if c1.pairs.is_empty() {
-                        result_files.insert(rel_path.clone(), FileDiffStatus::NotAKvFile(rel_path.clone()));
-                    } else {
-                        result_files.insert(rel_path.clone(), FileDiffStatus::OrphanInSource(c1));
+                    (Err(e), _) | (_, Err(e)) => {
+                        FileDiffStatus::Error(e)
                     }
                 }
-                Err(e) => {
-                    result_files.insert(rel_path.clone(), FileDiffStatus::Error(e));
-                }
-            }
-        } else if in_dir2 {
-            match parse_file_with_opts(&path2, opts2) {
-                Ok(c2) => {
-                    if c2.pairs.is_empty() {
-                        result_files.insert(rel_path.clone(), FileDiffStatus::NotAKvFile(rel_path.clone()));
-                    } else {
-                        result_files.insert(rel_path.clone(), FileDiffStatus::OrphanInTarget(c2));
+            } else if in_dir1 {
+                match parse_file_with_opts(&path1, opts1) {
+                    Ok(c1) => {
+                        if c1.pairs.is_empty() {
+                            FileDiffStatus::NotAKvFile(rel_path.clone())
+                        } else {
+                            FileDiffStatus::OrphanInSource(c1)
+                        }
+                    }
+                    Err(e) => {
+                        FileDiffStatus::Error(e)
                     }
                 }
-                Err(e) => {
-                    result_files.insert(rel_path.clone(), FileDiffStatus::Error(e));
+            } else if in_dir2 {
+                match parse_file_with_opts(&path2, opts2) {
+                    Ok(c2) => {
+                        if c2.pairs.is_empty() {
+                            FileDiffStatus::NotAKvFile(rel_path.clone())
+                        } else {
+                            FileDiffStatus::OrphanInTarget(c2)
+                        }
+                    }
+                    Err(e) => {
+                        FileDiffStatus::Error(e)
+                    }
                 }
-            }
-        }
-    }
+            } else {
+                unreachable!()
+            };
+
+            (rel_path, status)
+        })
+        .collect();
 
     DirDiffResult {
         files: result_files,

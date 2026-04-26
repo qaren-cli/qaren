@@ -14,7 +14,7 @@ use similar::{ChangeTag, TextDiff};
 
 /// Normalise a value (or key) string for comparison purposes according to `DiffOptions`.
 #[inline]
-fn normalise(value: &str, opts: &DiffOptions) -> String {
+pub fn normalise(value: &str, opts: &DiffOptions) -> String {
     let mut s = if opts.ignore_all_space {
         value.chars().filter(|c| !c.is_whitespace()).collect()
     } else if opts.ignore_space_change {
@@ -112,19 +112,32 @@ pub fn semantic_diff(file1: &ConfigFile, file2: &ConfigFile, opts: &DiffOptions)
 /// additions, deletions, and unchanged lines. Line numbers are tracked
 /// separately for old and new content.
 pub fn literal_diff(content1: &str, content2: &str, opts: &DiffOptions) -> LiteralDiffResult {
+    // Fast-path: Exact equality
+    if content1 == content2 {
+        return LiteralDiffResult {
+            additions: Vec::new(),
+            deletions: Vec::new(),
+            modifications: Vec::new(),
+        };
+    }
+
     let lines1: Vec<&str> = content1.lines().collect();
     let lines2: Vec<&str> = content2.lines().collect();
 
-    let (text1, text2) = if !opts.ignore_case && !opts.ignore_all_space && !opts.ignore_space_change && !opts.ignore_trailing_space {
-        (content1.to_string(), content2.to_string())
+    let (norm1, norm2): (Vec<String>, Vec<String>);
+    
+    let (refs1, refs2) = if !opts.ignore_case && !opts.ignore_all_space && !opts.ignore_space_change && !opts.ignore_trailing_space {
+        (lines1.clone(), lines2.clone())
     } else {
+        norm1 = lines1.iter().map(|&l| normalise(l, opts)).collect();
+        norm2 = lines2.iter().map(|&l| normalise(l, opts)).collect();
         (
-            lines1.iter().map(|&l| normalise(l, opts)).collect::<Vec<_>>().join("\n") + "\n",
-            lines2.iter().map(|&l| normalise(l, opts)).collect::<Vec<_>>().join("\n") + "\n",
+            norm1.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
+            norm2.iter().map(|s| s.as_str()).collect::<Vec<_>>()
         )
     };
 
-    let diff = TextDiff::from_lines(&text1, &text2);
+    let diff = TextDiff::from_slices(&refs1, &refs2);
 
     let mut additions = Vec::new();
     let mut deletions = Vec::new();
@@ -134,16 +147,10 @@ pub fn literal_diff(content1: &str, content2: &str, opts: &DiffOptions) -> Liter
     let mut new_line_num: usize = 1;
 
     for change in diff.iter_all_changes() {
-        let orig_content = match change.tag() {
-            ChangeTag::Delete => lines1.get(old_line_num - 1).unwrap_or(&"").to_string(),
-            ChangeTag::Insert => lines2.get(new_line_num - 1).unwrap_or(&"").to_string(),
-            ChangeTag::Equal => lines1.get(old_line_num - 1).unwrap_or(&"").to_string(),
-        };
-
-        let is_blank = orig_content.trim().is_empty();
-
         match change.tag() {
             ChangeTag::Delete => {
+                let orig_content = lines1.get(old_line_num - 1).unwrap_or(&"").to_string();
+                let is_blank = orig_content.trim().is_empty();
                 if !opts.ignore_blank_lines || !is_blank {
                     deletions.push(DiffLine {
                         content: orig_content,
@@ -153,6 +160,8 @@ pub fn literal_diff(content1: &str, content2: &str, opts: &DiffOptions) -> Liter
                 old_line_num += 1;
             }
             ChangeTag::Insert => {
+                let orig_content = lines2.get(new_line_num - 1).unwrap_or(&"").to_string();
+                let is_blank = orig_content.trim().is_empty();
                 if !opts.ignore_blank_lines || !is_blank {
                     additions.push(DiffLine {
                         content: orig_content,
@@ -522,12 +531,21 @@ mod property_tests {
     }
 
     /// Sanitize a value for test use
+    /// Also avoid ending with a backslash to prevent accidental multi-line joining in property tests.
     fn sanitize_value(s: &str) -> String {
-        s.chars()
+        let clean: String = s.chars()
             .filter(|c| is_safe_char(*c))
-            .collect::<String>()
-            .trim()
-            .to_string()
+            .collect();
+            
+        let mut trimmed = clean.trim().to_string();
+        while trimmed.ends_with('\\') || trimmed.ends_with(' ') {
+            if trimmed.ends_with('\\') {
+                trimmed.pop();
+            } else {
+                trimmed = trimmed.trim_end().to_string();
+            }
+        }
+        trimmed
     }
 
     /// Build a ConfigFile from sanitized pairs (deduplicates keys)
