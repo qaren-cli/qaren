@@ -15,3 +15,5 @@ targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-apple-da
 tap = "qaren-cli/homebrew-qaren"
 # Publish GitHub Releases
 publish-jobs = ["homebrew"]
+# Allow dirty (out of date) CI contents
+allow-dirty = ["ci"]
