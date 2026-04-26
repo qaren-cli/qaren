@@ -6,12 +6,12 @@ Welcome to the official documentation for **Qaren**, a blazingly fast, multi-par
 
 ## Overview
 
-Standard `diff` is a literal tool. It sees characters and lines. It was designed decades ago for comparing source code logic. But in modern infrastructure, configurations (`.env`, `.yaml`, `.ini`) and logs are *semantic*. 
+Standard `diff` is a literal tool. It sees characters and lines. It was designed decades ago for comparing source code logic. But in modern infrastructure, configurations (`.env`, `.yaml`, `.ini`) and system backups are *semantic*. 
 
 Qaren re-imagines what a comparison tool should be for modern infrastructure:
 - **Semantic Awareness:** Understands data formats, not just line order.
 - **Zero-Trust Security:** Automatic masking of sensitive data.
-- **Blazing Speed:** Optimized in Rust for GB-scale logs.
+- **Blazing Speed:** Optimized in Rust for GB-scale backups.
 - **Automation Ready:** Native JSON output and POSIX exit codes.
 
 ## Table of Contents
@@ -30,7 +30,7 @@ Qaren re-imagines what a comparison tool should be for modern infrastructure:
 
 Qaren provides two distinct comparison engines to cover all DevOps use cases:
 
-1. **`qaren diff` (Literal):** An enhanced, high-speed line-by-line comparison using the Myers diff algorithm. Ideal for logs, unstructured text, and recursive directory audits.
+1. **`qaren diff` (Literal):** An enhanced, high-speed line-by-line comparison using the Myers diff algorithm. Ideal for system backups, unstructured text, and recursive directory audits.
 2. **`qaren kv` (Semantic):** An order-agnostic, format-aware Key-Value comparison engine. Ideal for configurations and structured environment variables.
 
 ---

@@ -1,6 +1,6 @@
-# Configuration & Persistent Settings
+# Command: `qaren config`
 
-The `qaren config` command manages global, persistent settings. This allows you to tailor Qaren to your terminal environment or CI/CD runner without needing to pass the same flags on every execution.
+The `qaren config` command manages global, persistent settings for Qaren. These settings allow you to customize Qaren's behavior (such as color output and exit code semantics) without needing to pass flags on every execution.
 
 ## Usage
 
@@ -8,27 +8,17 @@ The `qaren config` command manages global, persistent settings. This allows you 
 qaren config [WHAT] [ACTION]
 ```
 
-## Options and Flags
+---
 
-| Argument | Description | Options |
-|----------|-------------|---------|
-| `WHAT` | The setting to configure | `exit`, `color`, `show`, `path` |
-| `ACTION` | The action to perform | `show` (default), `toggle` |
+## Detailed Options Reference
 
-## Configuration State File
-
-Settings are stored in your platform's native config directory:
-- **Linux/macOS:** `$XDG_CONFIG_HOME/qaren/config` (typically `~/.config/qaren/config`)
-- **Windows:** `%APPDATA%\qaren\config`
-
-## Viewing Configuration
-
-To see your current configuration state:
+### `show` (The Default Command)
+**Use Case:** View the entire current configuration state, including the path to the configuration file on your system.
+**Command Example:**
 ```bash
 qaren config show
 ```
-
-*Example Output:*
+**Output Example:**
 ```text
 Config file: /home/user/.config/qaren/config
 
@@ -36,51 +26,64 @@ Config file: /home/user/.config/qaren/config
   color output         : enabled
 ```
 
-## Managing Exit Codes (Pipeline Friendly Mode)
+### `exit`
+**Use Case:** Control how Qaren exits when differences are found. Essential for making Qaren "pipeline-friendly" in strict CI/CD environments.
+**Actions:**
+- `show`: View the current exit code behavior.
+- `toggle`: Switch between standard POSIX mode (exit 1 on diff) and Pipeline-Friendly mode (always exit 0).
 
-By default, Qaren follows the POSIX standard: it exits with `0` if files are identical, and exits with `1` if differences are found.
-
-In some automated deployment pipelines (like Jenkins, GitLab CI, or GitHub Actions), a non-zero exit code will immediately fail the pipeline. If you are using Qaren purely for auditing or generating JSON reports in a CI step, you might want it to always return `0` on successful execution, regardless of whether differences exist.
-
-**Toggle Pipeline-Friendly Mode:**
+**Command Example (Toggle):**
 ```bash
 qaren config exit toggle
 ```
-*Output:* `✔ exit nonzero-on-diff: disabled — always exit 0 on success`
+**Output Example:**
+```text
+✔ exit nonzero-on-diff: disabled — always exit 0 on success
+```
 
-*(Running the command again will toggle it back to standard behavior).*
+### `color`
+**Use Case:** Globally enable or disable ANSI color output. Useful for legacy terminals, text-only environments, or strict logging aggregators.
+**Actions:**
+- `show`: View current color settings.
+- `toggle`: Enable or disable color output.
 
-## Managing Colors
-
-If you want to globally disable ANSI color output from Qaren (for legacy terminals or strict text logging):
-
+**Command Example (Toggle):**
 ```bash
 qaren config color toggle
 ```
 
-## Path Management
-
-To see the exact path Qaren is using for its configuration:
+### `path`
+**Use Case:** Quickly retrieve the absolute path to the Qaren configuration file for manual editing or backup.
+**Command Example:**
 ```bash
-qaren config path show
+qaren config path
+```
+**Output Example:**
+```text
+/home/user/.config/qaren/config
 ```
 
 ---
 
-## Best Practices for Automation
+## Configuration File Locations
 
-If you are deploying Qaren inside Docker containers or ephemeral CI runners, you can configure it on the fly:
+Qaren follows platform-native standards for storing configuration:
 
-```yaml
-steps:
-  - name: Install Qaren
-    run: cargo install qaren
-    
-  - name: Configure Qaren for CI
-    run: qaren config exit toggle
-    
-  - name: Audit Configuration Drift
-    run: qaren kv ./production.env ./staging.env -o json > drift_report.json
+- **Linux / macOS:** `$XDG_CONFIG_HOME/qaren/config` (typically `~/.config/qaren/config`)
+- **Windows:** `%APPDATA%\qaren\config`
+
+---
+
+## Automation Best Practices
+
+In automated environments, you can pre-configure Qaren before running audits to ensure predictable behavior:
+
+```bash
+# Ensure the pipeline doesn't fail due to exit codes
+qaren config exit toggle
+
+# Run the audit and capture results
+qaren kv prod.env staging.env -o json > report.json
 ```
 
 ---

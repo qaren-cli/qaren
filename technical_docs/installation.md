@@ -32,7 +32,7 @@ For those who prefer to compile from source, you must have the Rust toolchain in
 
 ```bash
 # Clone the repository
-git clone https://github.com/alielesawy/qaren.git
+git clone https://github.com/qaren-cli/qaren.git
 cd qaren
 
 # Build the release binary

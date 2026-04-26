@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <b>La prochaine génération de comparaison de configurations et de journaux.</b><br>
+  <b>La prochaine génération de comparaison de configurations et de sauvegardes système.</b><br>
   Conçu pour l'ère moderne du DevOps : Sémantique, Sécurisé et Incroyablement Rapide.
 </p>
 
@@ -34,13 +34,13 @@
 
 ## 🚀 Pourquoi Qaren ?
 
-L'outil standard POSIX `diff` nous sert depuis 50 ans, mais il a été conçu pour le code source, et non pour les fichiers de configuration complexes et indépendants de l'ordre, ni pour les journaux massifs d'aujourd'hui.
+L'outil standard POSIX `diff` nous sert depuis 50 ans, mais il a été conçu pour le code source, et non pour les fichiers de configuration complexes et indépendants de l'ordre, ni pour les sauvegardes système massives d'aujourd'hui.
 
 Qaren (arabe pour **"Comparer"**) est un outil multi-paradigme qui comprend vos données.
 
 - **Analyse sémantique Clé-Valeur** : L'ordre n'a pas d'importance. Le formatage n'a pas d'importance. Seules les données comptent.
 - **Sécurité Zero-Trust** : Les secrets tels que les clés API, les mots de passe et les chaînes de connexion sont masqués par défaut (`***MASKED***`).
-- **Incroyablement Rapide** : Optimisé en Rust pour traiter des journaux à l'échelle du Go et plus de 100k clés jusqu'à **200x plus vite** que les pipelines diff traditionnels.
+- **Incroyablement Rapide** : Optimisé en Rust pour traiter des sauvegardes système à l'échelle du Go et plus de 100k clés jusqu'à **200x plus vite** que les pipelines diff traditionnels.
 - **Compatible ANSI** : Nettoie automatiquement les codes de couleur du terminal des fichiers "pollués" (comme la sortie de `pm2 env`) pour une comparaison propre.
 - **Patching Intelligent** : Générez des correctifs `.env` prêts pour la production afin de synchroniser les environnements en quelques secondes.
 
@@ -55,9 +55,9 @@ Pour des guides détaillés, la référence API et la configuration avancée, vi
 ## 🛠️ Caractéristiques principales
 
 ### 1. Sortie littérale améliorée
-Qaren fournit des diffs ligne par ligne beaucoup plus clairs que POSIX diff, spécifiquement optimisés pour l'analyse des fichiers journaux (logs).
+Qaren fournit des diffs ligne par ligne beaucoup plus clairs que POSIX diff, spécifiquement optimisés pour l'analyse des fichiers de sauvegarde système.
 ```bash
-$ qaren diff old.log new.log -w
+$ qaren diff backup-old backup-new -w
 -[L47] TimeoutOverflowWarning: does not fit into a 32-bit integer.
 +[L47] TimeoutOverflowWarning: 3000010000 does not fit into a 32-bit integer.
 ```
@@ -71,7 +71,7 @@ $ qaren kv prod.env staging.env
 ```
 
 ### 3. Réduction intelligente du bruit
-Vous comparez des journaux JSON en mode KV ? Utilisez `-D` pour supprimer les avertissements de clés dupliquées et `-P` pour masquer les alertes de permissions. Qaren limite automatiquement les avertissements à 5 par fichier pour garder votre terminal propre.
+Vous comparez des sauvegardes JSON en mode KV ? Utilisez `-D` pour supprimer les avertissements de clés dupliquées et `-P` pour masquer les alertes de permissions. Qaren limite automatiquement les avertissements à 5 par fichier pour garder votre terminal propre.
 
 ---
 
@@ -79,7 +79,7 @@ Vous comparez des journaux JSON en mode KV ? Utilisez `-D` pour supprimer les av
 
 ```bash
 # Cloner le dépôt
-git clone https://github.com/yourusername/qaren.git
+git clone https://github.com/qaren-cli/qaren.git
 cd qaren
 
 # Compiler le binaire de version
@@ -116,10 +116,10 @@ qaren kv a.env b.env --output json
 qaren diff file1.txt file2.txt -u
 
 # Diff de répertoire récursif
-qaren diff -r ./logs-old ./logs-new
+qaren diff -r ./backup-old ./backup-new
 
-# Supprimer les couleurs ANSI des fichiers journaux avant le diff
-qaren diff logs_polluted.txt logs_clean.txt -A
+# Supprimer les couleurs ANSI des fichiers de sauvegarde avant le diff
+qaren diff backup_polluted.txt backup_clean.txt -A
 
 # Ignorer les espaces blancs et les lignes vides
 qaren diff f1.txt f2.txt -w -B
@@ -146,7 +146,7 @@ qaren config show
 ## 📊 Benchmarks de Performance
 | Scénario | Gagnant | Marge |
 | :--- | :--- | :--- |
-| **Gros Logs (100Mo)** | **Qaren** | **200x+** |
+| **Grosses Sauvegardes (100Mo)** | **Qaren** | **200x+** |
 | **Répertoire Récursif** | **Qaren** | **3x** |
 | **Changements Massifs (1M de lignes)** | **Qaren** | **50x+** |
 

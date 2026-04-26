@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <b>The Next Generation of Configuration and Log Comparison.</b><br>
+  <b>The Next Generation of Configuration and System Backup Comparison.</b><br>
   Built for the modern DevOps era: Semantic, Secure, and Blazingly Fast.
 </p>
 
@@ -34,13 +34,13 @@
 
 ## 🚀 Why Qaren?
 
-Standard POSIX `diff` has served us for 50 years, but it was designed for source code, not for the complex, order-agnostic configuration files and massive logs of today.
+Standard POSIX `diff` has served us for 50 years, but it was designed for source code, not for the complex, order-agnostic configuration files and massive system backups of today.
 
 Qaren (Arabic for **"Compare"**) is a multi-paradigm tool that understands your data.
 
 - **Semantic Key-Value Parsing**: Order doesn't matter. Formatting doesn't matter. Only the data matters.
 - **Zero-Trust Security**: Secrets like API keys, passwords, and connection strings are masked by default (`***MASKED***`).
-- **Blazingly Fast**: Optimized in Rust to handle GB-scale logs and 100k+ keys up to **200x faster** than traditional diff pipelines.
+- **Blazingly Fast**: Optimized in Rust to handle GB-scale backups and 100k+ keys up to **200x faster** than traditional diff pipelines.
 - **ANSI-Aware**: Automatically cleans terminal color codes from "polluted" files (like `pm2 env` output) for clean comparison.
 - **Intelligent Patching**: Generate production-ready `.env` patches to synchronize environments in seconds.
 
@@ -55,9 +55,9 @@ For detailed guides, API reference, and advanced configuration, visit our docume
 ## 🛠️ Key Features
 
 ### 1. Enhanced Literal Output
-Qaren provides much clearer line-by-line diffs than POSIX diff, specifically optimized for log file analysis.
+Qaren provides much clearer line-by-line diffs than POSIX diff, specifically optimized for system backup analysis.
 ```bash
-$ qaren diff old.log new.log -w
+$ qaren diff backup-old.txt backup-new.txt -w
 -[L47] TimeoutOverflowWarning: does not fit into a 32-bit integer.
 +[L47] TimeoutOverflowWarning: 3000010000 does not fit into a 32-bit integer.
 ```
@@ -71,7 +71,7 @@ $ qaren kv prod.env staging.env
 ```
 
 ### 3. Smart Noise Reduction
-Comparing JSON logs in KV mode? Use `-D` to suppress duplicate key warnings and `-P` to silence permission alerts. Qaren automatically caps warnings at 5 per file to keep your terminal clean.
+Comparing JSON-based backups in KV mode? Use `-D` to suppress duplicate key warnings and `-P` to silence permission alerts. Qaren automatically caps warnings at 5 per file to keep your terminal clean.
 
 ---
 
@@ -93,7 +93,7 @@ cargo install qaren
 
 ---
 
-## 📖 Usage & Examples
+## Usage & Examples
 
 ### Semantic Comparison (KV)
 ```bash
@@ -119,10 +119,10 @@ qaren kv a.env b.env --output json
 qaren diff file1.txt file2.txt -u
 
 # Recursive directory diff
-qaren diff -r ./logs-old ./logs-new
+qaren diff -r ./backup-old ./backup-new
 
-# Strip ANSI colors from log files before diffing
-qaren diff logs_polluted.txt logs_clean.txt -A
+# Strip ANSI colors from system snapshots before diffing
+qaren diff backup_polluted.txt backup_clean.txt -A
 
 # Ignore whitespace and blank lines
 qaren diff f1.txt f2.txt -w -B
@@ -149,7 +149,7 @@ qaren config show
 ## 📊 Performance Benchmarks
 | Scenario | Winner | Margin |
 | :--- | :--- | :--- |
-| **Large Logs (100MB)** | **Qaren** | **200x+** |
+| **Large Backups (100MB)** | **Qaren** | **200x+** |
 | **Recursive Directory** | **Qaren** | **3x** |
 | **Massive Changes (1M Lines)** | **Qaren** | **50x+** |
 
@@ -176,5 +176,3 @@ We are **Open for Contributions!** Please read our **[Contributing Guide](CONTRI
 This project is licensed under the **MIT License**. See the `LICENSE` file for details.
 
 ---
-
-<p align="right">(قارن) — صنع بكل فخر للمهندسين</p>

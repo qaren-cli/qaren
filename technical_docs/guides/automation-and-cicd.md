@@ -62,7 +62,7 @@ jobs:
 
 ## Secret Masking in CI
 
-When running in CI environments, logs are often shipped to third-party aggregators. Qaren's built-in security features automatically mask detected secrets.
+When running in CI environments, pipeline outputs are often shipped to third-party aggregators. Qaren's built-in security features automatically mask detected secrets.
 
 ```bash
 qaren kv staging.env production.env

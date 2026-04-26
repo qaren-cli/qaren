@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <b>Die nächste Generation des Konfigurations- und Protokollvergleichs.</b><br>
+  <b>Die nächste Generation des Konfigurations- und System-Backup-Vergleichs.</b><br>
   Entwickelt für die moderne DevOps-Ära: Semantisch, Sicher und Blitzschnell.
 </p>
 
@@ -34,13 +34,13 @@
 
 ## 🚀 Warum Qaren?
 
-Das standardmäßige POSIX `diff` dient uns seit 50 Jahren, wurde jedoch für Quellcode entwickelt – nicht für die komplexen, reihenfolgeunabhängigen Konfigurationsdateien und massiven Protokolle von heute.
+Das standardmäßige POSIX `diff` dient uns seit 50 Jahren, wurde jedoch für Quellcode entwickelt – nicht für die komplexen, reihenfolgeunabhängigen Konfigurationsdateien und massiven System-Backups von heute.
 
 Qaren (arabisch für **„Vergleichen“**) ist ein Multi-Paradigma-Tool, das Ihre Daten versteht.
 
 - **Semantisches Key-Value-Parsing**: Die Reihenfolge spielt keine Rolle. Die Formatierung spielt keine Rolle. Nur die Daten zählen.
 - **Zero-Trust-Sicherheit**: Geheimnisse wie API-Schlüssel, Passwörter und Verbindungszeichenfolgen werden standardmäßig maskiert (`***MASKED***`).
-- **Blitzschnell**: In Rust optimiert, um Protokolle im GB-Bereich und über 100k Schlüssel bis zu **200-mal schneller** zu verarbeiten als herkömmliche Diff-Pipelines.
+- **Blitzschnell**: In Rust optimiert, um System-Backups im GB-Bereich und über 100k Schlüssel bis zu **200-mal schneller** zu verarbeiten als herkömmliche Diff-Pipelines.
 - **ANSI-Unterstützung**: Bereinigt Terminal-Farbcodes automatisch aus „verunreinigten“ Dateien (wie `pm2 env`-Ausgaben) für einen sauberen Vergleich.
 - **Intelligentes Patching**: Erstellen Sie produktionsbereite `.env`-Patches, um Umgebungen in Sekundenschnelle zu synchronisieren.
 
@@ -55,9 +55,9 @@ Detaillierte Anleitungen, API-Referenzen und erweiterte Konfigurationen finden S
 ## 🛠️ Hauptmerkmale
 
 ### 1. Verbesserte Textausgabe
-Qaren bietet viel klarere zeilenweise Diffs als POSIX-Diff, speziell optimiert für die Analyse von Protokolldateien.
+Qaren bietet viel klarere zeilenweise Diffs als POSIX-Diff, speziell optimiert für die Analyse von System-Backups.
 ```bash
-$ qaren diff old.log new.log -w
+$ qaren diff backup-old backup-new -w
 -[L47] TimeoutOverflowWarning: does not fit into a 32-bit integer.
 +[L47] TimeoutOverflowWarning: 3000010000 does not fit into a 32-bit integer.
 ```
@@ -71,7 +71,7 @@ $ qaren kv prod.env staging.env
 ```
 
 ### 3. Intelligente Rauschunterdrückung
-Vergleichen Sie JSON-Logs im KV-Modus? Verwenden Sie `-D`, um Warnungen zu doppelten Schlüsseln zu unterdrücken, und `-P`, um Berechtigungswarnungen stummzuschalten. Qaren begrenzt Warnungen automatisch auf 5 pro Datei, um Ihr Terminal sauber zu halten.
+Vergleichen Sie JSON-Backups im KV-Modus? Verwenden Sie `-D`, um Warnungen zu doppelten Schlüsseln zu unterdrücken, und `-P`, um Berechtigungswarnungen stummzuschalten. Qaren begrenzt Warnungen automatisch auf 5 pro Datei, um Ihr Terminal sauber zu halten.
 
 ---
 
@@ -79,7 +79,7 @@ Vergleichen Sie JSON-Logs im KV-Modus? Verwenden Sie `-D`, um Warnungen zu doppe
 
 ```bash
 # Repository klonen
-git clone https://github.com/yourusername/qaren.git
+git clone https://github.com/qaren-cli/qaren.git
 cd qaren
 
 # Release-Binary erstellen
@@ -116,10 +116,10 @@ qaren kv a.env b.env --output json
 qaren diff file1.txt file2.txt -u
 
 # Rekursiver Verzeichnis-Diff
-qaren diff -r ./logs-old ./logs-new
+qaren diff -r ./backup-old ./backup-new
 
-# ANSI-Farben vor dem Diff aus Log-Dateien entfernen
-qaren diff logs_polluted.txt logs_clean.txt -A
+# ANSI-Farben vor dem Diff aus Backup-Dateien entfernen
+qaren diff backup_polluted.txt backup_clean.txt -A
 
 # Leerzeichen und Leerzeilen ignorieren
 qaren diff f1.txt f2.txt -w -B
@@ -146,7 +146,7 @@ qaren config show
 ## 📊 Performance-Benchmarks
 | Szenario | Gewinner | Vorsprung |
 | :--- | :--- | :--- |
-| **Große Logs (100MB)** | **Qaren** | **200x+** |
+| **Große Backups (100MB)** | **Qaren** | **200x+** |
 | **Rekursives Verzeichnis** | **Qaren** | **3x** |
 | **Massive Änderungen (1M Zeilen)** | **Qaren** | **50x+** |
 

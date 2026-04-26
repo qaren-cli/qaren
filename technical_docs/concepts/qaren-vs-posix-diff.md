@@ -16,7 +16,7 @@ HOST=localhost
 PORT=8080
 ```
 
-POSIX `diff` will report a deletion and an addition, creating noise in code reviews and CI logs.
+POSIX `diff` will report a deletion and an addition, creating noise in code reviews and CI output.
 
 ## The Qaren Approach
 
@@ -31,7 +31,7 @@ Qaren offers two distinct operational modes:
 
 ## Core Advantages of Qaren
 
-- **Zero-Trust Ready**: In-memory secret masking ensures sensitive values (API keys, tokens) are never leaked to stdout or CI logs.
+- **Zero-Trust Ready**: In-memory secret masking ensures sensitive values (API keys, tokens) are never leaked to stdout or CI output.
 - **Offline by Design**: No telemetry, no external API calls, ensuring complete data sovereignty.
 - **CI/CD Native**: Deterministic exit codes designed specifically for pipeline automation and drift detection.
 - **Memory Efficient**: Rust-powered zero-cost abstractions guarantee maximum speed without large heap allocations.

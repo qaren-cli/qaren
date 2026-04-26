@@ -1,8 +1,6 @@
 # Command: `qaren kv`
 
-The `qaren kv` (alias: `kvp`) command is the core of Qaren's capabilities. It performs a semantic, order-agnostic comparison of Key-Value configurations. It natively understands formats like `KEY=VALUE` and `KEY: VALUE` and automatically detects delimiters.
-
-If you manage `.env`, `.yaml`, `.ini`, or unstructured log key-values, this command will save you hours of manual auditing.
+The `qaren kv` (alias: `kvp`) command is the semantic core of Qaren. It performs order-agnostic comparison of Key-Value configuration files. It natively understands data structures, automatically masks secrets, and provides intelligent environment synchronization tools.
 
 ## Usage
 
@@ -11,74 +9,178 @@ qaren kv [OPTIONS] [FILE1] [FILE2]
 ```
 *(Note: FILE1 is treated as the Source/Reference, FILE2 is the Target).*
 
-## Core Features
+---
 
-### 1. Semantic Awareness & Auto-Detection
-Qaren automatically detects delimiters. It doesn't matter if `file1.env` uses `=` and `file2.yaml` uses `:`. Qaren parses the data, not the syntax.
+## Detailed Options Reference
 
-### 2. Zero-Trust Secrets Masking
-By default, Qaren identifies value differences but redacts the actual sensitive strings in the terminal output with `***MASKED***`.
+### `-d, --delimiter <DELIMITER>`
+**Use Case:** Explicitly set the delimiter for both files (e.g., if auto-detection fails or you want to force a specific parsing logic).
+**Command Example:**
+```bash
+qaren kv -d "=" prod.env staging.env
+```
 
-*   **`-S, --show-secrets`**
-    Disables masking and shows the actual plain text values that differ.
-    ```bash
-    qaren kv -S source.env target.env
-    ```
+### `--d1`, `--d2 <DELIMITER>`
+**Use Case:** Compare files with different formats (e.g., a `.env` file using `=` and a `.yaml` file using `:`).
+**Command Example:**
+```bash
+qaren kv config.yaml variables.env --d1 ":" --d2 "="
+```
 
-## Options and Flags
+### `-Q, --strip-quotes`
+**Use Case:** Remove surrounding single or double quotes from both keys and values. Essential when comparing files where some keys are quoted and others are not.
+**Command Example:**
+```bash
+qaren kv -Q file1.env file2.env
+```
 
-| Short | Long Flag | Description |
-|-------|-----------|-------------|
-| `-d` | `--delimiter <DELIMITER>` | Delimiter for BOTH files. Auto-detected if omitted. |
-| | `--d1 <DELIMITER>` | Delimiter override for file1 only |
-| | `--d2 <DELIMITER>` | Delimiter override for file2 only |
-| `-Q` | `--strip-quotes` | Strip surrounding quotes from keys and values |
-| `-i` | `--ignore-case` | Ignore case differences in file contents |
-| `-w` | `--ignore-all-space` | Ignore all white space (strips spaces inside values) |
-| `-r` | `--recursive` | Recursively compare directories containing KV files |
-| `-o` | `--output <FORMAT>` | Output format (`text` or `json`). Default: `text` |
-| `-x` | `--ignore-key <KEY>` | Ignore a specific key (exact match). Can be repeated. |
-| | `--ignore-keyword <KWD>` | Ignore keys containing this keyword (substring) |
-| `-q` | `--quiet` | Quiet mode - no stdout/stderr output. Return exit code only. |
-| `-s` | `--summary` | Summary mode - minimize output, aggregate warnings |
-| `-P` | `--no-perm-warn` | Silences warnings about insecure file permissions |
-| `-D` | `--no-duplicate-warn` | Silences warnings about duplicate keys |
-| | `--missing-only` | Show *only* keys present in source but missing in target |
-| `-g` | `--generate-patch <FILE>` | Generate a patch file containing missing keys |
-| | `--mask-patches` | Mask secrets in generated patch files |
-| | `--direction <DIR>` | Patch direction: `source-to-target`, `target-to-source`, `bidirectional` |
+### `-i, --ignore-case`
+**Use Case:** Disregard case differences in both keys and values.
+**Command Example:**
+```bash
+qaren kv -i dev.env PROD.env
+```
+
+### `-w, --ignore-all-space`
+**Use Case:** Remove all whitespace characters from keys and values before comparison. Useful for comparing messy files with inconsistent internal spacing.
+**Command Example:**
+```bash
+qaren kv -w messy.env clean.env
+```
+
+### `-A, --strip-ansi`
+**Use Case:** Strip terminal color codes from values. Crucial when comparing environments where values were captured from colored terminal outputs.
+**Command Example:**
+```bash
+qaren kv -A env_output.txt expected.env
+```
+
+### `-r, --recursive`
+**Use Case:** Recursively compare directories containing Key-Value files. Qaren will match files by relative path and perform semantic KV comparison on each pair.
+**Command Example:**
+```bash
+qaren kv -r ./config_v1 ./config_v2
+```
+
+### `-o, --output <FORMAT>`
+**Use Case:** Switch between standard terminal output and machine-readable JSON. JSON output is ideal for integration with other tools (e.g., `jq`).
+**Command Example:**
+```bash
+qaren kv prod.env staging.env -o json
+```
+**Output Example:**
+```json
+{
+  "missing_in_source": [{"key": "DEBUG", "value": "true"}],
+  "modified": {
+    "PORT": {"old": "8080", "new": "9090"}
+  }
+}
+```
+
+### `-x, --ignore-key <KEY>`
+**Use Case:** Exclude a specific key from the comparison. Can be passed multiple times to ignore several keys.
+**Command Example:**
+```bash
+qaren kv a.env b.env -x TIMESTAMP -x RUNTIME_ID
+```
+
+### `--ignore-keyword <KEYWORD>`
+**Use Case:** Exclude any keys that contain the specified keyword (case-insensitive substring). Great for ignoring dynamic cloud provider keys (e.g., `AWS_`, `GOOGLE_`).
+**Command Example:**
+```bash
+qaren kv dev.env prod.env --ignore-keyword AWS
+```
+
+### `-q, --quiet`
+**Use Case:** Absolute silence. Returns exit code `0` if identical and `1` if drift is detected.
+**Command Example:**
+```bash
+qaren kv --quiet .env .env.backup || echo "Drift detected!"
+```
+
+### `-s, --summary`
+**Use Case:** Minimize terminal output to a high-level summary. Ideal for broad audits where you don't need to see every individual value change.
+**Command Example:**
+```bash
+qaren kv prod.env staging.env -s
+```
+**Output Example:**
+```text
+── prod.env vs staging.env ──
+Summary: 2 only in prod.env, 1 only in staging.env, 4 modified
+```
+
+### `-S, --show-secrets`
+**Use Case:** Disable the default "Zero-Trust" masking. By default, Qaren hides values; use this flag to see exactly what the differences are.
+**Command Example:**
+```bash
+qaren kv prod.env local.env -S
+```
+**Output Example:**
+```text
+── Modified (1 keys) ──
+  ~ DB_PASS: s3cret → p@ssw0rd
+```
+
+### `-v, --verbose`
+**Use Case:** Show all keys, including those that are identical (which are hidden by default to reduce noise). Also shows parsing metadata.
+**Command Example:**
+```bash
+qaren kv a.env b.env -v
+```
+
+### `--missing-only`
+**Use Case:** Filter the output to ONLY show keys that exist in the source file but are missing in the target. Useful for identifying what needs to be added to a new environment.
+**Command Example:**
+```bash
+qaren kv prod.env .env.example --missing-only
+```
+
+### `-g, --generate-patch <FILE>`
+**Use Case:** Automatically generate a new configuration file containing the differences. This is the ultimate tool for environment synchronization.
+**Command Example:**
+```bash
+qaren kv prod.env local.env -g missing_keys.env
+```
+
+### `--mask-patches` (requires `-g`)
+**Use Case:** Redact secret values in the generated patch file. Use this if you need to share a patch file over insecure channels (Slack, Email) for someone else to fill in the secrets.
+**Command Example:**
+```bash
+qaren kv prod.env local.env -g patch.env --mask-patches
+```
+
+### `--direction <DIR>` (requires `-g`)
+**Use Case:** Control which differences are included in the patch.
+- `source-to-target` (default): Keys in FILE1 missing from FILE2.
+- `target-to-source`: Keys in FILE2 missing from FILE1.
+- `bidirectional`: Generates two patch files to sync both ways.
+**Command Example:**
+```bash
+qaren kv prod.env dev.env -g sync --direction bidirectional
+```
 
 ---
 
-## Intelligent Patching (`-g, --generate-patch`)
+## Advanced: Combining Flags
 
-Qaren doesn't just find problems; it fixes them. 
-
-*   **`-g, --generate-patch <FILE>`**
-    Generates a patch file containing keys that are missing.
-*   **`--direction <DIR>`**
-    *   `source-to-target` (default): Extracts keys in FILE1 missing from FILE2.
-    *   `target-to-source`: Extracts keys in FILE2 missing from FILE1.
-    *   `bidirectional`: Creates two patch files concurrently to sync both environments.
-*   **`--mask-patches`**
-    By default, generated patches contain the *real* values to allow instant syncing. If you are sharing a patch file securely over Slack/Email and want to redact the secrets, use this flag.
-
-**Example: Safe Synchronization**
+### 1. Secure Environment Sync
+Identify what staging is missing from production, mask the secrets, and output as JSON for a custom dashboard.
 ```bash
-# Find what's in prod that staging lacks, and create a sync file
-qaren kv prod.env staging.env -g staging-sync.env
+qaren kv prod.env staging.env --missing-only --mask-patches -o json
 ```
 
-## More Examples
-
-**Cross-format comparison (YAML-like to ENV-like):**
+### 2. Aggressive Cross-Format Comparison
+Compare a quoted `.env` file with a colon-delimited YAML file, ignoring all whitespace and case differences.
 ```bash
-qaren kv config.yml variables.env --d1 ":" --d2 "="
+qaren kv config.yaml .env -Q -i -w --d1 ":" --d2 "="
 ```
 
-**Output as machine-readable JSON:**
+### 3. CI/CD Drift Guard
+Check for configuration drift in a script, ignoring dynamic AWS keys and permission warnings, with absolute silence.
 ```bash
-qaren kv prod.env staging.env -o json
+qaren kv --quiet prod.env staging.env --ignore-keyword AWS -P
 ```
 
 ---
