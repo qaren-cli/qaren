@@ -6,16 +6,23 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+*'
   workflow_dispatch:
 
+# Prevent multiple release jobs from running at the same time for the same tag/ref
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   validate:
     name: Validate (Test & Lint)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,6 +53,8 @@ jobs:
     name: Publish to crates.io
     needs: validate
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -67,6 +76,8 @@ jobs:
     name: Build and Release
     needs: validate
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:

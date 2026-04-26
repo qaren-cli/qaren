@@ -1,0 +1,5 @@
+# Critical Security Files
+.github/workflows/* @alielesawy
+scripts/install.sh @alielesawy
+Cargo.toml @alielesawy
+LICENSE @alielesawy
