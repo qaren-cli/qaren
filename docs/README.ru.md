@@ -21,7 +21,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/rust-stable-brightgreen.svg" alt="Rust">
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
-  <img src="https://img.shields.io/badge/version-0.3.6-orange.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.0.0-orange.svg" alt="Version">
   <img src="https://img.shields.io/badge/PRs-welcome-cyan.svg" alt="PRs Welcome">
   <a href="https://github.com/qaren-cli/qaren/actions/workflows/release.yml">
     <img src="https://github.com/qaren-cli/qaren/actions/workflows/release.yml/badge.svg" alt="Release">
@@ -30,7 +30,7 @@
 
 ---
 
-## 🚀 Почему Qaren?
+## Почему Qaren? <img src="../icons/favicon.png" width="24" height="24"> &nbsp; [<img src="../icons/icons8-linkedin-48.png" width="24" height="24">](https://www.linkedin.com/in/alielesawy) &nbsp; [<img src="../icons/icons8-github-48.png" width="24" height="24">](https://github.com/alielesawy)
 
 Стандартный POSIX `diff` служит нам уже 50 лет, но он был разработан для исходного кода, а не для сложных, не зависящих от порядка конфигурационных файлов и огромных системных бэкапов современности.
 
@@ -44,13 +44,13 @@ Qaren (с арабского **«Сравнивать»**) — это много
 
 ---
 
-## 📚 Документация
+## <img src="../icons/icons8-doc-48.png" width="24" height="24"> Документация
 Подробные руководства, справочник API и расширенная конфигурация доступны в нашей документации:
-👉 **[https://qaren.me/docs](https://qaren.me/docs)**
+> **[https://qaren.me/docs](https://qaren.me/docs)**
 
 ---
 
-## 🛠️ Ключевые особенности
+## <img src="../icons/icons8-feature-48.png" width="24" height="24"> Ключевые особенности
 
 ### 1. Улучшенный вывод
 Qaren предоставляет гораздо более четкие построчные различия, чем POSIX diff, специально оптимизированные для анализа файлов бэкапов.
@@ -73,7 +73,7 @@ $ qaren kv prod.env staging.env
 
 ---
 
-## 📥 Установка
+## <img src="../icons/icons8-installation-48.png" width="24" height="24"> Установка
 
 ```bash
 # Клонировать репозиторий
@@ -88,7 +88,7 @@ cargo build --release
 
 ---
 
-## 📖 Использование и примеры
+## <img src="../icons/icons8-rust-48.png" width="24" height="24"> Использование и примеры
 
 ### Семантическое сравнение (KV)
 ```bash
@@ -125,7 +125,7 @@ qaren diff f1.txt f2.txt -w -B
 
 ---
 
-## ⚙️ Конфигурация
+## <img src="../icons/icons8-configuration-48.png" width="24" height="24"> Конфигурация
 
 Qaren запоминает ваши предпочтения.
 ```bash
@@ -141,7 +141,7 @@ qaren config show
 
 ---
 
-## 📊 Бенчмарки производительности
+## <img src="../icons/icons8-performance-48.png" width="24" height="24"> Бенчмарки производительности
 | Сценарий | Победитель | Разрыв |
 | :--- | :--- | :--- |
 | **Большие бэкапы (100MB)** | **Qaren** | **200x+** |
@@ -150,11 +150,11 @@ qaren config show
 
 ---
 
-## 🤝 Участие и поддержка
+## <img src="../icons/icons8-contribution-64.png" width="24" height="24"> Участие и поддержка
 
 Мы **открыты для контрибьюта!** Будь то исправление багов, новые парсеры или оптимизация производительности — ваши PR приветствуются.
 
-⭐ **Пожалуйста, поставьте звезду проекту, если он вам полезен!**
+<img src="../icons/icons8-star-.gif" width="20" height="20"> **Пожалуйста, поставьте звезду проекту, если он вам полезен!**
 
 - **Официальный сайт**: [https://qaren.me/](https://qaren.me/)
 - **Полная документация**: [https://qaren.me/docs](https://qaren.me/docs)
@@ -162,7 +162,7 @@ qaren config show
 
 ---
 
-## 📜 Лицензия
+## <img src="../icons/icons8-licence-48.png" width="24" height="24"> Лицензия
 Этот проект распространяется под **лицензией MIT**. Подробности в файле `LICENSE`.
 
 ---

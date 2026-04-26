@@ -21,7 +21,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/rust-stable-brightgreen.svg" alt="Rust">
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
-  <img src="https://img.shields.io/badge/version-0.3.6-orange.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.0.0-orange.svg" alt="Version">
   <img src="https://img.shields.io/badge/PRs-welcome-cyan.svg" alt="PRs Welcome">
   <a href="https://github.com/qaren-cli/qaren/actions/workflows/release.yml">
     <img src="https://github.com/qaren-cli/qaren/actions/workflows/release.yml/badge.svg" alt="Release">
@@ -30,7 +30,7 @@
 
 ---
 
-## 🚀 لماذا قارن؟
+## لماذا قارن؟ <img src="../icons/favicon.png" width="24" height="24"> &nbsp; [<img src="../icons/icons8-linkedin-48.png" width="24" height="24">](https://www.linkedin.com/in/alielesawy) &nbsp; [<img src="../icons/icons8-github-48.png" width="24" height="24">](https://github.com/alielesawy)
 
 أداة `diff` القياسية خدمت المهندسين لـ 50 عاماً، لكنها صُممت للشفرة المصدرية (Source Code)، وليس لملفات الإعدادات المعقدة والنسخ الاحتياطي الضخم للنظام الذي لا يعتمد على ترتيب الأسطر كما هو الحال اليوم.
 
@@ -44,13 +44,13 @@
 
 ---
 
-## 📚 التوثيق
+## <img src="../icons/icons8-doc-48.png" width="24" height="24"> التوثيق
 للاطلاع على الأدلة التفصيلية، ومرجع الـ API، والإعدادات المتقدمة، تفضل بزيارة موقع التوثيق الخاص بنا:
-👉 **[https://qaren.me/docs](https://qaren.me/docs)**
+> **[https://qaren.me/docs](https://qaren.me/docs)**
 
 ---
 
-## 🛠️ الميزات الرئيسية
+## <img src="../icons/icons8-feature-48.png" width="24" height="24"> الميزات الرئيسية
 
 ### 1. مخرجات نصية محسنة
 يوفر "قارن" مقارنة أسطر أوضح بكثير من POSIX diff، مصممة خصيصاً لتحليل ملفات النسخ الاحتياطي للنظام.
@@ -73,7 +73,7 @@ $ qaren kv prod.env staging.env
 
 ---
 
-## 📥 التثبيت
+## <img src="../icons/icons8-installation-48.png" width="24" height="24"> التثبيت
 
 ```bash
 # استنساخ المستودع
@@ -88,7 +88,7 @@ cargo build --release
 
 ---
 
-## 📖 الاستخدام وأمثلة
+## <img src="../icons/icons8-rust-48.png" width="24" height="24"> الاستخدام وأمثلة
 
 ### المقارنة الدلالية (KV)
 ```bash
@@ -125,7 +125,7 @@ qaren diff f1.txt f2.txt -w -B
 
 ---
 
-## ⚙️ الإعدادات
+## <img src="../icons/icons8-configuration-48.png" width="24" height="24"> الإعدادات
 
 يتذكر "قارن" تفضيلاتك.
 ```bash
@@ -141,7 +141,7 @@ qaren config show
 
 ---
 
-## 📊 اختبارات الأداء
+## <img src="../icons/icons8-performance-48.png" width="24" height="24"> اختبارات الأداء
 | السيناريو | الفائز | الفرق |
 | :--- | :--- | :--- |
 | **نسخ احتياطي ضخم (100MB)** | **قارن (Qaren)** | **200x+** |
@@ -150,11 +150,11 @@ qaren config show
 
 ---
 
-## 🤝 المساهمة والدعم
+## <img src="../icons/icons8-contribution-64.png" width="24" height="24"> المساهمة والدعم
 
 نحن **نرحب بالمساهمات!** سواء كان ذلك إصلاحاً لخطأ، أو محللاً جديداً، أو تحسيناً للأداء، فإن طلبات السحب (PRs) الخاصة بك مرحب بها.
 
-⭐ **يرجى إعطاء نجمة للمشروع إذا وجدته مفيداً!**
+<img src="../icons/icons8-star-.gif" width="20" height="20"> **يرجى إعطاء نجمة للمشروع إذا وجدته مفيداً!**
 
 - **الموقع الرسمي**: [https://qaren.me/](https://qaren.me/)
 - **التوثيق الكامل**: [https://qaren.me/docs](https://qaren.me/docs)
@@ -162,7 +162,7 @@ qaren config show
 
 ---
 
-## 📜 الترخيص
+## <img src="../icons/icons8-licence-48.png" width="24" height="24"> الترخيص
 هذا المشروع مرخص بموجب **رخصة MIT**. راجع ملف `LICENSE` لمزيد من التفاصيل.
 
 ---

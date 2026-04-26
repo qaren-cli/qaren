@@ -21,7 +21,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/rust-stable-brightgreen.svg" alt="Rust">
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
-  <img src="https://img.shields.io/badge/version-0.3.6-orange.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.0.0-orange.svg" alt="Version">
   <img src="https://img.shields.io/badge/PRs-welcome-cyan.svg" alt="PRs Welcome">
   <a href="https://github.com/qaren-cli/qaren/actions/workflows/release.yml">
     <img src="https://github.com/qaren-cli/qaren/actions/workflows/release.yml/badge.svg" alt="Release">
@@ -30,7 +30,7 @@
 
 ---
 
-## 🚀 چرا Qaren؟
+## چرا Qaren؟ <img src="../icons/favicon.png" width="24" height="24"> &nbsp; [<img src="../icons/icons8-linkedin-48.png" width="24" height="24">](https://www.linkedin.com/in/alielesawy) &nbsp; [<img src="../icons/icons8-github-48.png" width="24" height="24">](https://github.com/alielesawy)
 
 ابزار استاندارد POSIX `diff` به مدت ۵۰ سال به ما خدمت کرده است، اما برای کد منبع طراحی شده بود، نه برای فایل‌های تنظیمات پیچیده و نسخه‌های پشتیبان سیستم حجیم امروزی که ترتیب در آن‌ها اهمیتی ندارد.
 
@@ -44,13 +44,13 @@
 
 ---
 
-## 📚 مستندات
+## <img src="../icons/icons8-doc-48.png" width="24" height="24"> مستندات
 برای راهنماهای دقیق، مرجع API و تنظیمات پیشرفته، از سایت مستندات ما دیدن کنید:
-👉 **[https://qaren.me/docs](https://qaren.me/docs)**
+> **[https://qaren.me/docs](https://qaren.me/docs)**
 
 ---
 
-## 🛠️ ویژگی‌های کلیدی
+## <img src="../icons/icons8-feature-48.png" width="24" height="24"> ویژگی‌های کلیدی
 
 ### ۱. خروجی متنی بهبود یافته
 Qaren مقایسه خط به خط بسیار واضح‌تری نسبت به POSIX diff ارائه می‌دهد که مخصوصاً برای تحلیل فایل‌های نسخه پشتیبان سیستم بهینه شده است.
@@ -73,7 +73,7 @@ $ qaren kv prod.env staging.env
 
 ---
 
-## 📥 نصب
+## <img src="../icons/icons8-installation-48.png" width="24" height="24"> نصب
 
 ```bash
 # کلون کردن مخزن
@@ -88,7 +88,7 @@ cargo build --release
 
 ---
 
-## 📖 نحوه استفاده و مثال‌ها
+## <img src="../icons/icons8-rust-48.png" width="24" height="24"> نحوه استفاده و مثال‌ها
 
 ### مقایسه معنایی (KV)
 ```bash
@@ -125,7 +125,7 @@ qaren diff f1.txt f2.txt -w -B
 
 ---
 
-## ⚙️ تنظیمات
+## <img src="../icons/icons8-configuration-48.png" width="24" height="24"> تنظیمات
 
 Qaren ترجیحات شما را به خاطر می‌سپارد.
 ```bash
@@ -141,7 +141,7 @@ qaren config show
 
 ---
 
-## 📊 بنچمارک‌های عملکرد
+## <img src="../icons/icons8-performance-48.png" width="24" height="24"> بنچمارک‌های عملکرد
 | سناریو | برنده | اختلاف |
 | :--- | :--- | :--- |
 | **نسخه‌های پشتیبان حجیم (100MB)** | **Qaren** | **+200 برابر** |
@@ -150,11 +150,11 @@ qaren config show
 
 ---
 
-## 🤝 مشارکت و پشتیبانی
+## <img src="../icons/icons8-contribution-64.png" width="24" height="24"> مشارکت و پشتیبانی
 
 ما **پذیرای مشارکت‌های شما هستیم!** چه رفع باگ باشد، چه پارسر جدید یا بهبود عملکرد، درخواست‌های pull شما خوش‌آمد گفته می‌شود.
 
-⭐ **لطفاً اگر این ابزار برایتان مفید بود، به پروژه ستاره بدهید!**
+<img src="../icons/icons8-star-.gif" width="20" height="20"> **لطفاً اگر این ابزار برایتان مفید بود، به پروژه ستاره بدهید!**
 
 - **وب‌سایت رسمی**: [https://qaren.me/](https://qaren.me/)
 - **مستندات کامل**: [https://qaren.me/docs](https://qaren.me/docs)
@@ -162,7 +162,7 @@ qaren config show
 
 ---
 
-## 📜 مجوز
+## <img src="../icons/icons8-licence-48.png" width="24" height="24"> مجوز
 این پروژه تحت **مجوز MIT** منتشر شده است. برای جزئیات بیشتر فایل `LICENSE` را مطالعه کنید.
 
 ---

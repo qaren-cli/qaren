@@ -16,8 +16,8 @@ Qaren re-imagines what a comparison tool should be for modern infrastructure:
 
 ## Table of Contents
 
-- [🚀 Installation](installation.md)
-- [📖 CLI Reference & Global Options](cli-reference.md)
+- [Installation](installation.md)
+- [<img src="../icons/icons8-doc-48.png" width="20" height="20"> CLI Reference & Global Options](cli-reference.md)
 - **Core Commands**
   - [`kv` - Semantic Key-Value Comparison](commands/kv.md)
   - [`diff` - Literal line-by-line Comparison](commands/diff.md)

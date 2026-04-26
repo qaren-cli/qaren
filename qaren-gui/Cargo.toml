@@ -1,6 +1,6 @@
 [package]
 name = "qaren-gui"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 description = "GUI application for Qaren configuration comparison tool"
 
