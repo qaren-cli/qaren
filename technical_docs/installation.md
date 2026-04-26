@@ -2,23 +2,29 @@
 
 Qaren is distributed as a statically linked binary, ensuring a zero-dependency footprint on your host machine.
 
-## Pre-compiled Binaries (Recommended)
+## Automated Installation (Recommended)
 
-Download the latest release for your platform and place it in your executable `$PATH`.
+The easiest way to install Qaren is via our automated installer scripts which detect your platform and architecture automatically.
 
+### Linux & macOS
 ```bash
-# Download the latest Linux AMD64 release
-curl -LO https://github.com/alielesawy/qaren/releases/latest/download/qaren-linux-amd64.tar.gz
-
-# Extract the archive
-tar -xzf qaren-linux-amd64.tar.gz
-
-# Move binary to local bin
-sudo mv qaren /usr/local/bin/
-
-# Verify installation
-qaren --version
+curl -sSfL https://qaren.me/install | sh
 ```
+
+### Windows (PowerShell)
+```powershell
+irm https://qaren.me/install.ps1 | iex
+```
+
+### Homebrew
+```bash
+brew tap qaren-cli/qaren
+brew install qaren
+```
+
+## Manual Installation
+
+If you prefer to handle things manually, you can download the latest release for your platform from the [GitHub Releases](https://github.com/qaren-cli/qaren/releases) page.
 
 ## Building from Source
 
