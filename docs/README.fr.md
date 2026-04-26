@@ -22,9 +22,12 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/rust-stable-brightgreen.svg" alt="Rust">
-  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="Licence">
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
   <img src="https://img.shields.io/badge/version-0.3.6-orange.svg" alt="Version">
   <img src="https://img.shields.io/badge/PRs-welcome-cyan.svg" alt="PRs Welcome">
+  <a href="https://github.com/qaren-cli/qaren/actions/workflows/release.yml">
+    <img src="https://github.com/qaren-cli/qaren/actions/workflows/release.yml/badge.svg" alt="Release">
+  </a>
 </p>
 
 ---

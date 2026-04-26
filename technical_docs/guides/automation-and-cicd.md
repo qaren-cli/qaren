@@ -52,7 +52,7 @@ jobs:
       
       - name: Install Qaren
         run: |
-          curl -LO https://github.com/alielesawy/qaren/releases/latest/download/qaren-linux-amd64.tar.gz
+          curl -LO https://github.com/qaren-cli/qaren/releases/latest/download/qaren-linux-amd64.tar.gz
           tar -xzf qaren-linux-amd64.tar.gz
           sudo mv qaren /usr/local/bin/
           

@@ -25,3 +25,7 @@ reales/
 # Python repro scripts
 kv_bug_repro*.py
 repro_ansi.py
+
+
+# AI files
+.agen*

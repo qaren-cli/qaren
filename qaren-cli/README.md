@@ -1,5 +1,7 @@
 # Qaren (قارن)
 
+[![Release](https://github.com/qaren-cli/qaren/actions/workflows/release.yml/badge.svg)](https://github.com/qaren-cli/qaren/actions/workflows/release.yml)
+
 A blazingly fast, secure, offline configuration comparison tool.
 
 ## Features

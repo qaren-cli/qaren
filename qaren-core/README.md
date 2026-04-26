@@ -1,5 +1,7 @@
 # Qaren Core
 
+[![Release](https://github.com/qaren-cli/qaren/actions/workflows/release.yml/badge.svg)](https://github.com/qaren-cli/qaren/actions/workflows/release.yml)
+
 The core library for the [Qaren](https://github.com/qaren-cli/qaren) configuration comparison tool.
 
 This crate provides the parsing, diffing, and patching logic used by the Qaren CLI.

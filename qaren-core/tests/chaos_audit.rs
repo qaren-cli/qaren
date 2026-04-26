@@ -410,7 +410,6 @@ mod parser_chaos {
 // ═══════════════════════════════════════════════════════════════════
 
 mod masking_chaos {
-    use super::*;
 
     // We need to test the masking module. Since it's in the CLI crate,
     // we'll re-implement the same logic to test core assumptions.
