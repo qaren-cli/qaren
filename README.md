@@ -159,7 +159,12 @@ qaren config show
 
 ## 🤝 Contributing & Support
 
-We are **Open for Contributions!** Whether it's a bug fix, a new parser, or a performance tweak, your PRs are welcome.
+We are **Open for Contributions!** Please read our **[Contributing Guide](CONTRIBUTING.md)** before submitting a Pull Request.
+
+- [ ] **Fork** the repo.
+- [ ] **Improve** or **Add** features (avoid deletions).
+- [ ] Ensure **Zero Warnings** (`clippy` & `tests`).
+- [ ] Update **Docs** and **--help** for new flags.
 
 ⭐ **Please star the project if you find it useful!**
 
