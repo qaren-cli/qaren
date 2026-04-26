@@ -44,7 +44,7 @@ pub use diff::{literal_diff, normalise, semantic_diff};
 pub use directory::{collect_files_recursive, semantic_diff_dir, DirParseOptions};
 pub use error::{QarenError, QarenResult};
 pub use masking::{mask_value, should_mask};
-pub use parser::{detect_delimiter, parse_content, parse_file};
+pub use parser::{detect_delimiter, parse_content, parse_file, strip_ansi};
 pub use patch::{generate_patch, generate_recursive_patch};
 pub use types::{
     ConfigFile, DiffLine, DiffOptions, DiffResult, DirDiffResult, FileDiffStatus, KvPair, LiteralDiffResult, ModifiedPair,

@@ -5,17 +5,6 @@
 <h1 align="center">Qaren (قارن)</h1>
 
 <p align="center">
-  <a href="README.md">English</a> | 
-  <a href="docs/README.zh.md">中文</a> | 
-  <a href="docs/README.ru.md">Русский</a> | 
-  <a href="docs/README.ar.md">العربية</a> | 
-  <a href="docs/README.fa.md">فارسی</a> | 
-  <a href="docs/README.ja.md">日本語</a> | 
-  <a href="docs/README.de.md">Deutsch</a> | 
-  <a href="docs/README.fr.md">Français</a>
-</p>
-
-<p align="center">
   <b>The Next Generation of Configuration and Log Comparison.</b><br>
   Built for the modern DevOps era: Semantic, Secure, and Blazingly Fast.
 </p>
@@ -40,12 +29,6 @@ Qaren (Arabic for **"Compare"**) is a multi-paradigm tool that understands your 
 - **Blazingly Fast**: Optimized in Rust to handle GB-scale logs and 100k+ keys up to **200x faster** than traditional diff pipelines.
 - **ANSI-Aware**: Automatically cleans terminal color codes from "polluted" files (like `pm2 env` output) for clean comparison.
 - **Intelligent Patching**: Generate production-ready `.env` patches to synchronize environments in seconds.
-
----
-
-## 📚 Documentation
-For detailed guides, API reference, and advanced configuration, visit our documentation:
-👉 **[https://qaren.me/docs](https://qaren.me/docs)**
 
 ---
 
@@ -157,7 +140,6 @@ We are **Open for Contributions!** Whether it's a bug fix, a new parser, or a pe
 ⭐ **Please star the project if you find it useful!**
 
 - **Official Website**: [https://qaren.me/](https://qaren.me/)
-- **Full Documentation**: [https://qaren.me/docs](https://qaren.me/docs)
 - **Bug Reports**: Go to [https://qaren.me/community](https://qaren.me/community) and click **"Open Issue"**.
 
 ---
@@ -168,3 +150,14 @@ This project is licensed under the **MIT License**. See the `LICENSE` file for d
 ---
 
 <p align="right">(قارن) — صنع بكل فخر للمهندسين</p>
+
+## (Arabic / بالعربية)
+
+**قارن (Qaren)** هو الجيل القادم من أدوات مقارنة الإعدادات (Configuration) والسجلات (Logs). 
+
+- **مقارنة ذكية**: يفهم صيغ KEY=VALUE ولا يكترث بترتيب الأسطر.
+- **أمان عالٍ**: يقوم بإخفاء الأسرار (Secrets) تلقائياً.
+- **سرعة فائقة**: مبرمج بلغة Rust للتعامل مع ملفات ضخمة بسرعة مذهلة.
+- **دعم ANSI**: تنظيف الأكواد البرمجية الخاصة بالألوان من الملفات للمقارنة بوضوح.
+
+الموقع الرسمي: [https://qaren.me/](https://qaren.me/)

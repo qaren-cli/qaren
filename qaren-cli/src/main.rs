@@ -184,6 +184,7 @@ fn handle_diff_command(
             ignore_blank_lines,
             ignore_keys: vec![],
             ignore_keywords: vec![],
+            strip_ansi: shared.strip_ansi,
         };
 
         use rayon::prelude::*;
@@ -208,7 +209,7 @@ fn handle_diff_command(
                 let m2 = std::fs::metadata(&p2).ok();
                 
                 let can_short_circuit_on_size = !opts.ignore_case && !opts.ignore_all_space && !opts.ignore_space_change 
-                    && !opts.ignore_trailing_space && !opts.ignore_blank_lines;
+                    && !opts.ignore_trailing_space && !opts.ignore_blank_lines && !opts.strip_ansi;
 
                 if can_short_circuit_on_size {
                     if let (Some(m1), Some(m2)) = (m1, m2) {
@@ -222,8 +223,8 @@ fn handle_diff_command(
                     }
                 }
 
-                let c1 = std::fs::read_to_string(&p1).unwrap_or_default();
-                let c2 = std::fs::read_to_string(&p2).unwrap_or_default();
+                let c1 = std::fs::read(&p1).unwrap_or_default();
+                let c2 = std::fs::read(&p2).unwrap_or_default();
                 
                 if c1 == c2 {
                     if report_identical_files && !quiet {
@@ -273,6 +274,10 @@ fn handle_diff_command(
         }
         
         for w in warnings {
+            let is_perm_warn = w.contains("permissions");
+            if is_perm_warn && shared.no_perm_warn {
+                continue;
+            }
             eprintln!("Warning: {}", w);
         }
 
@@ -290,30 +295,35 @@ fn handle_diff_command(
         ignore_blank_lines,
         ignore_keys: vec![],
         ignore_keywords: vec![],
+        strip_ansi: shared.strip_ansi,
     };
 
     // Fast-path: If no "ignore" flags are set and sizes differ, they must be different.
     if !opts.ignore_case && !opts.ignore_all_space && !opts.ignore_space_change 
-       && !opts.ignore_trailing_space && !opts.ignore_blank_lines 
+       && !opts.ignore_trailing_space && !opts.ignore_blank_lines && !opts.strip_ansi
     {
         if let (Some(m1), Some(m2)) = (&metadata1, &metadata2) {
             if m1.len() != m2.len() {
-                if !quiet && brief {
+                if quiet {
+                    return Ok(false);
+                }
+                if brief {
                     let l1 = file1.file_name().and_then(|n| n.to_str()).unwrap_or("file1");
                     let l2 = file2.file_name().and_then(|n| n.to_str()).unwrap_or("file2");
                     println!("Files {} and {} differ", l1, l2);
+                    return Ok(false);
                 }
-                return Ok(false);
+                // Proceed to literal_diff to show actual differences when not in brief/quiet mode
             }
         }
     }
 
-    let content1 = std::fs::read_to_string(file1)
+    let content1 = std::fs::read(file1)
         .map_err(|e| QarenError::from_io_with_path(e, file1.to_path_buf()))?;
-    let content2 = std::fs::read_to_string(file2)
+    let content2 = std::fs::read(file2)
         .map_err(|e| QarenError::from_io_with_path(e, file2.to_path_buf()))?;
 
-    // Fast-path: Exact string equality check
+    // Fast-path: Exact byte equality check
     if content1 == content2 {
         if !quiet && report_identical_files {
             let l1 = file1.file_name().and_then(|n| n.to_str()).unwrap_or("file1");
@@ -339,8 +349,10 @@ fn handle_diff_command(
             if brief {
                 println!("Files {} and {} differ", l1, l2);
             } else if unified {
-                let lines1: Vec<&str> = content1.lines().collect();
-                let lines2: Vec<&str> = content2.lines().collect();
+                let s1 = String::from_utf8_lossy(&content1);
+                let s2 = String::from_utf8_lossy(&content2);
+                let lines1: Vec<&str> = s1.lines().collect();
+                let lines2: Vec<&str> = s2.lines().collect();
 
                 let (norm1, norm2): (Vec<String>, Vec<String>);
                 let (refs1, refs2) = if !opts.ignore_case && !opts.ignore_all_space && !opts.ignore_space_change && !opts.ignore_trailing_space {
@@ -484,17 +496,20 @@ fn handle_kv_command(
         ignore_blank_lines: false,
         ignore_keys: ignore_keys.clone(),
         ignore_keywords: ignore_keywords.clone(),
+        strip_ansi: shared.strip_ansi,
     };
 
     if recursive {
         let dir_opts1 = DirParseOptions {
             delimiter: delim1_opt,
             strip_quotes,
+            strip_ansi: shared.strip_ansi,
             ..DirParseOptions::default()
         };
         let dir_opts2 = DirParseOptions {
             delimiter: delim2_opt,
             strip_quotes,
+            strip_ansi: shared.strip_ansi,
             ..DirParseOptions::default()
         };
 
@@ -591,8 +606,8 @@ fn handle_kv_command(
 
         if let Some(output_path) = generate_patch {
             let patch_direction: PatchDirection = direction.parse().map_err(QarenError::InvalidArguments)?;
-            let patch_opts1 = ParseOptions { delimiter: delim1_opt.unwrap_or('='), strip_quotes, ..ParseOptions::default() };
-            let patch_opts2 = ParseOptions { delimiter: delim2_opt.unwrap_or('='), strip_quotes, ..ParseOptions::default() };
+            let patch_opts1 = ParseOptions { delimiter: delim1_opt.unwrap_or('='), strip_quotes, strip_ansi: shared.strip_ansi, ..ParseOptions::default() };
+            let patch_opts2 = ParseOptions { delimiter: delim2_opt.unwrap_or('='), strip_quotes, strip_ansi: shared.strip_ansi, ..ParseOptions::default() };
             
             let created_files = qaren_core::generate_recursive_patch(&dir_diff, output_path, &patch_opts1, &patch_opts2, patch_direction, mask_patches)?;
             if !quiet {
@@ -620,12 +635,14 @@ fn handle_kv_command(
         delimiter: delim1,
         strip_quotes,
         ignore_case: false,    // parsing is case-preserving; diff handles case
+        strip_ansi: shared.strip_ansi,
         ..ParseOptions::default()
     };
     let opts2 = ParseOptions {
         delimiter: delim2,
         strip_quotes,
         ignore_case: false,
+        strip_ansi: shared.strip_ansi,
         ..ParseOptions::default()
     };
 
@@ -647,25 +664,69 @@ fn handle_kv_command(
         ignore_blank_lines: false,
         ignore_keys,
         ignore_keywords,
+        strip_ansi: shared.strip_ansi,
     };
 
     if !quiet {
         use colored::Colorize;
         if summary {
-            let warn_count1 = config1.warnings.iter().filter(|w| w.key.as_ref().is_none_or(|k| !diff_opts.is_ignored(k))).count();
-            if warn_count1 > 0 {
+            let warn_count1 = config1.warnings.iter().filter(|w| w.key.is_some() && w.key.as_ref().is_none_or(|k| !diff_opts.is_ignored(k))).count();
+            if !shared.no_duplicate_warn && warn_count1 > 0 {
                 eprintln!("{} {}: {} duplicate keys detected (auto-overwritten).", "⚠".yellow(), file1.display(), warn_count1);
             }
-            let warn_count2 = config2.warnings.iter().filter(|w| w.key.as_ref().is_none_or(|k| !diff_opts.is_ignored(k))).count();
-            if warn_count2 > 0 {
+            let warn_count2 = config2.warnings.iter().filter(|w| w.key.is_some() && w.key.as_ref().is_none_or(|k| !diff_opts.is_ignored(k))).count();
+            if !shared.no_duplicate_warn && warn_count2 > 0 {
                 eprintln!("{} {}: {} duplicate keys detected (auto-overwritten).", "⚠".yellow(), file2.display(), warn_count2);
             }
         } else {
-            for w in config1.warnings.iter().chain(config2.warnings.iter()) {
+            let mut shown_duplicates1 = 0;
+            let mut total_duplicates1 = 0;
+            for w in &config1.warnings {
+                let is_duplicate = w.key.is_some();
+                if is_duplicate {
+                    total_duplicates1 += 1;
+                    if shared.no_duplicate_warn { continue; }
+                    if shown_duplicates1 >= 5 { continue; }
+                    shown_duplicates1 += 1;
+                }
+
+                let is_perm_warn = w.key.is_none() && w.message.contains("permissions");
+                if is_perm_warn && shared.no_perm_warn {
+                    continue;
+                }
+                
                 let should_show = w.key.as_ref().is_none_or(|k| !diff_opts.is_ignored(k));
                 if should_show {
                     eprintln!("{}: {}", "⚠ Warning".yellow().bold(), w.message);
                 }
+            }
+            if !shared.no_duplicate_warn && total_duplicates1 > shown_duplicates1 {
+                eprintln!("  {} ... and {} more duplicate keys in {}", "ℹ".cyan(), total_duplicates1 - shown_duplicates1, file1.display());
+            }
+
+            let mut shown_duplicates2 = 0;
+            let mut total_duplicates2 = 0;
+            for w in &config2.warnings {
+                let is_duplicate = w.key.is_some();
+                if is_duplicate {
+                    total_duplicates2 += 1;
+                    if shared.no_duplicate_warn { continue; }
+                    if shown_duplicates2 >= 5 { continue; }
+                    shown_duplicates2 += 1;
+                }
+
+                let is_perm_warn = w.key.is_none() && w.message.contains("permissions");
+                if is_perm_warn && shared.no_perm_warn {
+                    continue;
+                }
+                
+                let should_show = w.key.as_ref().is_none_or(|k| !diff_opts.is_ignored(k));
+                if should_show {
+                    eprintln!("{}: {}", "⚠ Warning".yellow().bold(), w.message);
+                }
+            }
+            if !shared.no_duplicate_warn && total_duplicates2 > shown_duplicates2 {
+                eprintln!("  {} ... and {} more duplicate keys in {}", "ℹ".cyan(), total_duplicates2 - shown_duplicates2, file2.display());
             }
         }
     }
@@ -727,12 +788,14 @@ fn handle_kv_command(
                 strip_quotes: opts1.strip_quotes,
                 comment_prefixes: opts1.comment_prefixes.clone(),
                 ignore_case: opts1.ignore_case,
+                strip_ansi: shared.strip_ansi,
             };
             let patch_opts2 = ParseOptions {
                 delimiter: opts2.delimiter,
                 strip_quotes: opts2.strip_quotes,
                 comment_prefixes: opts2.comment_prefixes.clone(),
                 ignore_case: opts2.ignore_case,
+                strip_ansi: shared.strip_ansi,
             };
 
             let created_files = qaren_core::generate_patch(&diff_result, output_path, &patch_opts1, &patch_opts2, patch_direction, mask_patches)?;

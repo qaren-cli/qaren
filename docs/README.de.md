@@ -1,0 +1,169 @@
+<p align="center">
+  <img src="../icon.png" width="160" alt="Qaren Logo">
+</p>
+
+<h1 align="center">Qaren (قارن)</h1>
+
+<p align="center">
+  <a href="../README.md">English</a> | 
+  <a href="README.zh.md">中文</a> | 
+  <a href="README.ru.md">Русский</a> | 
+  <a href="README.ar.md">العربية</a> | 
+  <a href="README.fa.md">فارسی</a> | 
+  <a href="README.ja.md">日本語</a> | 
+  <a href="README.de.md">Deutsch</a> | 
+  <a href="README.fr.md">Français</a>
+</p>
+
+<p align="center">
+  <b>Die nächste Generation des Konfigurations- und Protokollvergleichs.</b><br>
+  Entwickelt für die moderne DevOps-Ära: Semantisch, Sicher und Blitzschnell.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/rust-stable-brightgreen.svg" alt="Rust">
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="Lizenz">
+  <img src="https://img.shields.io/badge/version-0.3.6-orange.svg" alt="Version">
+  <img src="https://img.shields.io/badge/PRs-welcome-cyan.svg" alt="PRs Willkommen">
+</p>
+
+---
+
+## 🚀 Warum Qaren?
+
+Das standardmäßige POSIX `diff` dient uns seit 50 Jahren, wurde jedoch für Quellcode entwickelt – nicht für die komplexen, reihenfolgeunabhängigen Konfigurationsdateien und massiven Protokolle von heute.
+
+Qaren (arabisch für **„Vergleichen“**) ist ein Multi-Paradigma-Tool, das Ihre Daten versteht.
+
+- **Semantisches Key-Value-Parsing**: Die Reihenfolge spielt keine Rolle. Die Formatierung spielt keine Rolle. Nur die Daten zählen.
+- **Zero-Trust-Sicherheit**: Geheimnisse wie API-Schlüssel, Passwörter und Verbindungszeichenfolgen werden standardmäßig maskiert (`***MASKED***`).
+- **Blitzschnell**: In Rust optimiert, um Protokolle im GB-Bereich und über 100k Schlüssel bis zu **200-mal schneller** zu verarbeiten als herkömmliche Diff-Pipelines.
+- **ANSI-Unterstützung**: Bereinigt Terminal-Farbcodes automatisch aus „verunreinigten“ Dateien (wie `pm2 env`-Ausgaben) für einen sauberen Vergleich.
+- **Intelligentes Patching**: Erstellen Sie produktionsbereite `.env`-Patches, um Umgebungen in Sekundenschnelle zu synchronisieren.
+
+---
+
+## 📚 Dokumentation
+Detaillierte Anleitungen, API-Referenzen und erweiterte Konfigurationen finden Sie in unserer Dokumentation:
+👉 **[https://qaren.me/docs](https://qaren.me/docs)**
+
+---
+
+## 🛠️ Hauptmerkmale
+
+### 1. Verbesserte Textausgabe
+Qaren bietet viel klarere zeilenweise Diffs als POSIX-Diff, speziell optimiert für die Analyse von Protokolldateien.
+```bash
+$ qaren diff old.log new.log -w
+-[L47] TimeoutOverflowWarning: does not fit into a 32-bit integer.
++[L47] TimeoutOverflowWarning: 3000010000 does not fit into a 32-bit integer.
+```
+
+### 2. Semantischer KV-Modus
+Versteht `.env`-, `.yaml`- und `.ini`-Dateien unabhängig von der Schlüsselreihenfolge.
+```bash
+$ qaren kv prod.env staging.env
+── Modified (1 keys) ──
+  ~ PORT: 5000 → 4040
+```
+
+### 3. Intelligente Rauschunterdrückung
+Vergleichen Sie JSON-Logs im KV-Modus? Verwenden Sie `-D`, um Warnungen zu doppelten Schlüsseln zu unterdrücken, und `-P`, um Berechtigungswarnungen stummzuschalten. Qaren begrenzt Warnungen automatisch auf 5 pro Datei, um Ihr Terminal sauber zu halten.
+
+---
+
+## 📥 Installation
+
+```bash
+# Repository klonen
+git clone https://github.com/yourusername/qaren.git
+cd qaren
+
+# Release-Binary erstellen
+cargo build --release
+
+# Das Binary befindet sich unter ./target/release/qaren
+```
+
+---
+
+## 📖 Nutzung & Beispiele
+
+### Semantischer Vergleich (KV)
+```bash
+# Basis-Vergleich (erkennt automatisch = oder :)
+qaren kv file1.env file2.env
+
+# Vergleich verschiedener Formate (z. B. .env vs. .yaml)
+qaren kv file1.env file2.yaml --d2 ':'
+
+# Patch-Datei für fehlende Schlüssel generieren
+qaren kv prod.env local.env -g patch.env
+
+# Bestimmte Schlüssel oder Schlüsselwörter ignorieren
+qaren kv a.env b.env -x HOSTNAME --ignore-keyword AWS
+
+# Ausgabe als maschinenlesbares JSON
+qaren kv a.env b.env --output json
+```
+
+### Wörtlicher Vergleich (Diff)
+```bash
+# Unified-Diff-Format (POSIX-konform)
+qaren diff file1.txt file2.txt -u
+
+# Rekursiver Verzeichnis-Diff
+qaren diff -r ./logs-old ./logs-new
+
+# ANSI-Farben vor dem Diff aus Log-Dateien entfernen
+qaren diff logs_polluted.txt logs_clean.txt -A
+
+# Leerzeichen und Leerzeilen ignorieren
+qaren diff f1.txt f2.txt -w -B
+```
+
+---
+
+## ⚙️ Konfiguration
+
+Qaren merkt sich Ihre Einstellungen.
+```bash
+# Pipeline-freundlichen Modus umschalten (beendet immer mit 0)
+qaren config exit toggle
+
+# Farbausgabe umschalten
+qaren config color toggle
+
+# Aktuelle Einstellungen anzeigen
+qaren config show
+```
+
+---
+
+## 📊 Performance-Benchmarks
+| Szenario | Gewinner | Vorsprung |
+| :--- | :--- | :--- |
+| **Große Logs (100MB)** | **Qaren** | **200x+** |
+| **Rekursives Verzeichnis** | **Qaren** | **3x** |
+| **Massive Änderungen (1M Zeilen)** | **Qaren** | **50x+** |
+
+---
+
+## 🤝 Mitwirken & Support
+
+Wir sind **offen für Beiträge!** Ob Fehlerbehebung, neuer Parser oder Leistungsoptimierung – Ihre Pull-Requests sind willkommen.
+
+⭐ **Bitte geben Sie dem Projekt einen Stern, wenn Sie es nützlich finden!**
+
+- **Offizielle Webseite**: [https://qaren.me/](https://qaren.me/)
+- **Vollständige Dokumentation**: [https://qaren.me/docs](https://qaren.me/docs)
+- **Fehlerberichte**: Gehen Sie zu [https://qaren.me/community](https://qaren.me/community) und klicken Sie auf **„Open Issue“**.
+
+---
+
+## 📜 Lizenz
+Dieses Projekt steht unter der **MIT-Lizenz**. Weitere Details finden Sie in der Datei `LICENSE`.
+
+---
+
+<p align="right">(قارن) — Mit Stolz für Ingenieure entwickelt</p>

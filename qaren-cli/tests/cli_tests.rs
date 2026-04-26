@@ -469,7 +469,8 @@ fn test_diff_different_files() {
     qaren_cmd()
         .args(["diff", &f1.display().to_string(), &f2.display().to_string()])
         .assert()
-        .code(1);
+        .code(1)
+        .stdout(predicate::str::is_empty().not());
 }
 
 // ─── kv: --direction without --generate-missing → exit 2 ──────────

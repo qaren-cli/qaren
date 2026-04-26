@@ -1,6 +1,6 @@
 [package]
 name = "qaren-core"
-version = "0.2.0"
+version = "0.3.6"
 edition = "2021"
 description = "Core library for Qaren configuration comparison tool"
 

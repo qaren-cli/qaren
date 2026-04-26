@@ -21,6 +21,8 @@ pub struct DirParseOptions {
     pub comment_prefixes: Vec<String>,
     /// Compare values case-insensitively
     pub ignore_case: bool,
+    /// Strip ANSI escape codes from input
+    pub strip_ansi: bool,
 }
 
 impl Default for DirParseOptions {
@@ -30,6 +32,7 @@ impl Default for DirParseOptions {
             strip_quotes: false,
             comment_prefixes: vec!["#".to_string(), "//".to_string()],
             ignore_case: false,
+            strip_ansi: false,
         }
     }
 }
@@ -96,6 +99,7 @@ fn parse_file_with_opts(path: &Path, dir_opts: &DirParseOptions) -> Result<Confi
         strip_quotes: dir_opts.strip_quotes,
         comment_prefixes: dir_opts.comment_prefixes.clone(),
         ignore_case: dir_opts.ignore_case,
+        strip_ansi: dir_opts.strip_ansi,
     };
 
     #[allow(unused_mut)]

@@ -10,7 +10,7 @@
 use crate::types::{
     ConfigFile, DiffLine, DiffResult, DiffOptions, KvPair, LiteralDiffResult, ModifiedPair,
 };
-use similar::{ChangeTag, TextDiff};
+use similar::{Algorithm, ChangeTag, DiffOp, TextDiff, capture_diff_slices};
 
 /// Normalise a value (or key) string for comparison purposes according to `DiffOptions`.
 #[inline]
@@ -111,7 +111,7 @@ pub fn semantic_diff(file1: &ConfigFile, file2: &ConfigFile, opts: &DiffOptions)
 /// Uses the Myers diff algorithm (via the `similar` crate) to detect
 /// additions, deletions, and unchanged lines. Line numbers are tracked
 /// separately for old and new content.
-pub fn literal_diff(content1: &str, content2: &str, opts: &DiffOptions) -> LiteralDiffResult {
+pub fn literal_diff(content1: &[u8], content2: &[u8], opts: &DiffOptions) -> LiteralDiffResult {
     // Fast-path: Exact equality
     if content1 == content2 {
         return LiteralDiffResult {
@@ -121,58 +121,129 @@ pub fn literal_diff(content1: &str, content2: &str, opts: &DiffOptions) -> Liter
         };
     }
 
-    let lines1: Vec<&str> = content1.lines().collect();
-    let lines2: Vec<&str> = content2.lines().collect();
-
-    let (norm1, norm2): (Vec<String>, Vec<String>);
-    
-    let (refs1, refs2) = if !opts.ignore_case && !opts.ignore_all_space && !opts.ignore_space_change && !opts.ignore_trailing_space {
-        (lines1.clone(), lines2.clone())
-    } else {
-        norm1 = lines1.iter().map(|&l| normalise(l, opts)).collect();
-        norm2 = lines2.iter().map(|&l| normalise(l, opts)).collect();
-        (
-            norm1.iter().map(|s| s.as_str()).collect::<Vec<_>>(),
-            norm2.iter().map(|s| s.as_str()).collect::<Vec<_>>()
-        )
-    };
-
-    let diff = TextDiff::from_slices(&refs1, &refs2);
+    let has_ignore_flags = opts.ignore_case || opts.ignore_all_space || opts.ignore_space_change || opts.ignore_trailing_space || opts.strip_ansi;
 
     let mut additions = Vec::new();
     let mut deletions = Vec::new();
-    let modifications = Vec::new();
 
-    let mut old_line_num: usize = 1;
-    let mut new_line_num: usize = 1;
+    if !has_ignore_flags {
+        // Optimized fast path: manual line splitting for byte slices to avoid similar v2.7 limitations
+        let lines1: Vec<&[u8]> = content1.split(|&b| b == b'\n').collect();
+        let lines2: Vec<&[u8]> = content2.split(|&b| b == b'\n').collect();
+        
+        let ops = capture_diff_slices(Algorithm::Myers, &lines1, &lines2);
+        
+        for op in ops {
+            match op {
+                DiffOp::Delete { old_index, old_len, .. } => {
+                    for i in 0..old_len {
+                        let idx = old_index + i;
+                        let mut val = lines1[idx];
+                        if let Some(stripped) = val.strip_suffix(b"\r") {
+                            val = stripped;
+                        }
+                        let content = String::from_utf8_lossy(val).to_string();
+                        if !opts.ignore_blank_lines || !content.trim().is_empty() {
+                            deletions.push(DiffLine {
+                                content,
+                                line_number: idx + 1,
+                            });
+                        }
+                    }
+                }
+                DiffOp::Insert { new_index, new_len, .. } => {
+                    for i in 0..new_len {
+                        let idx = new_index + i;
+                        let mut val = lines2[idx];
+                        if let Some(stripped) = val.strip_suffix(b"\r") {
+                            val = stripped;
+                        }
+                        let content = String::from_utf8_lossy(val).to_string();
+                        if !opts.ignore_blank_lines || !content.trim().is_empty() {
+                            additions.push(DiffLine {
+                                content,
+                                line_number: idx + 1,
+                            });
+                        }
+                    }
+                }
+                DiffOp::Replace { old_index, old_len, new_index, new_len } => {
+                    for i in 0..old_len {
+                        let idx = old_index + i;
+                        let mut val = lines1[idx];
+                        if let Some(stripped) = val.strip_suffix(b"\r") {
+                            val = stripped;
+                        }
+                        let content = String::from_utf8_lossy(val).to_string();
+                        if !opts.ignore_blank_lines || !content.trim().is_empty() {
+                            deletions.push(DiffLine {
+                                content,
+                                line_number: idx + 1,
+                            });
+                        }
+                    }
+                    for i in 0..new_len {
+                        let idx = new_index + i;
+                        let mut val = lines2[idx];
+                        if let Some(stripped) = val.strip_suffix(b"\r") {
+                            val = stripped;
+                        }
+                        let content = String::from_utf8_lossy(val).to_string();
+                        if !opts.ignore_blank_lines || !content.trim().is_empty() {
+                            additions.push(DiffLine {
+                                content,
+                                line_number: idx + 1,
+                            });
+                        }
+                    }
+                }
+                DiffOp::Equal { .. } => {}
+            }
+        }
+    } else {
+        // Slow path: Normalization or ANSI stripping is required.
+        let mut s1 = String::from_utf8_lossy(content1).to_string();
+        let mut s2 = String::from_utf8_lossy(content2).to_string();
 
-    for change in diff.iter_all_changes() {
-        match change.tag() {
-            ChangeTag::Delete => {
-                let orig_content = lines1.get(old_line_num - 1).unwrap_or(&"").to_string();
-                let is_blank = orig_content.trim().is_empty();
-                if !opts.ignore_blank_lines || !is_blank {
-                    deletions.push(DiffLine {
-                        content: orig_content,
-                        line_number: old_line_num,
-                    });
+        if opts.strip_ansi {
+            s1 = crate::parser::strip_ansi(&s1);
+            s2 = crate::parser::strip_ansi(&s2);
+        }
+        
+        let lines1: Vec<&str> = s1.lines().collect();
+        let lines2: Vec<&str> = s2.lines().collect();
+
+        let norm1: Vec<String> = lines1.iter().map(|&l| normalise(l, opts)).collect();
+        let norm2: Vec<String> = lines2.iter().map(|&l| normalise(l, opts)).collect();
+        
+        let refs1: Vec<&str> = norm1.iter().map(|s| s.as_str()).collect();
+        let refs2: Vec<&str> = norm2.iter().map(|s| s.as_str()).collect();
+
+        let diff = TextDiff::from_slices(&refs1, &refs2);
+
+        for change in diff.iter_all_changes() {
+            match change.tag() {
+                ChangeTag::Delete => {
+                    let idx = change.old_index().unwrap();
+                    let orig_content = lines1.get(idx).unwrap_or(&"").to_string();
+                    if !opts.ignore_blank_lines || !orig_content.trim().is_empty() {
+                        deletions.push(DiffLine {
+                            content: orig_content,
+                            line_number: idx + 1,
+                        });
+                    }
                 }
-                old_line_num += 1;
-            }
-            ChangeTag::Insert => {
-                let orig_content = lines2.get(new_line_num - 1).unwrap_or(&"").to_string();
-                let is_blank = orig_content.trim().is_empty();
-                if !opts.ignore_blank_lines || !is_blank {
-                    additions.push(DiffLine {
-                        content: orig_content,
-                        line_number: new_line_num,
-                    });
+                ChangeTag::Insert => {
+                    let idx = change.new_index().unwrap();
+                    let orig_content = lines2.get(idx).unwrap_or(&"").to_string();
+                    if !opts.ignore_blank_lines || !orig_content.trim().is_empty() {
+                        additions.push(DiffLine {
+                            content: orig_content,
+                            line_number: idx + 1,
+                        });
+                    }
                 }
-                new_line_num += 1;
-            }
-            ChangeTag::Equal => {
-                old_line_num += 1;
-                new_line_num += 1;
+                ChangeTag::Equal => {}
             }
         }
     }
@@ -180,7 +251,7 @@ pub fn literal_diff(content1: &str, content2: &str, opts: &DiffOptions) -> Liter
     LiteralDiffResult {
         additions,
         deletions,
-        modifications,
+        modifications: Vec::new(),
     }
 }
 
@@ -441,14 +512,14 @@ mod tests {
 
     #[test]
     fn test_literal_identical() {
-        let result = literal_diff("line1\nline2\n", "line1\nline2\n", &default_opts());
+        let result = literal_diff("line1\nline2\n".as_bytes(), "line1\nline2\n".as_bytes(), &default_opts());
         assert!(result.additions.is_empty());
         assert!(result.deletions.is_empty());
     }
 
     #[test]
     fn test_literal_additions() {
-        let result = literal_diff("line1\n", "line1\nline2\n", &default_opts());
+        let result = literal_diff("line1\n".as_bytes(), "line1\nline2\n".as_bytes(), &default_opts());
         assert_eq!(result.additions.len(), 1);
         assert!(result.additions[0].content.contains("line2"));
         assert!(result.deletions.is_empty());
@@ -456,7 +527,7 @@ mod tests {
 
     #[test]
     fn test_literal_deletions() {
-        let result = literal_diff("line1\nline2\n", "line1\n", &default_opts());
+        let result = literal_diff("line1\nline2\n".as_bytes(), "line1\n".as_bytes(), &default_opts());
         assert!(result.additions.is_empty());
         assert_eq!(result.deletions.len(), 1);
         assert!(result.deletions[0].content.contains("line2"));
@@ -466,7 +537,7 @@ mod tests {
     fn test_literal_mixed_changes() {
         let content1 = "line1\nline2\nline3\n";
         let content2 = "line1\nmodified\nline3\nline4\n";
-        let result = literal_diff(content1, content2, &default_opts());
+        let result = literal_diff(content1.as_bytes(), content2.as_bytes(), &default_opts());
 
         // line2 deleted, "modified" and "line4" added
         assert!(!result.deletions.is_empty());
@@ -475,21 +546,21 @@ mod tests {
 
     #[test]
     fn test_literal_empty_files() {
-        let result = literal_diff("", "", &default_opts());
+        let result = literal_diff(b"", b"", &default_opts());
         assert!(result.additions.is_empty());
         assert!(result.deletions.is_empty());
     }
 
     #[test]
     fn test_literal_empty_vs_content() {
-        let result = literal_diff("", "line1\nline2\n", &default_opts());
+        let result = literal_diff(b"", "line1\nline2\n".as_bytes(), &default_opts());
         assert_eq!(result.additions.len(), 2);
         assert!(result.deletions.is_empty());
     }
 
     #[test]
     fn test_literal_tracks_line_numbers() {
-        let result = literal_diff("a\nb\n", "a\nc\n", &default_opts());
+        let result = literal_diff(b"a\nb\n", b"a\nc\n", &default_opts());
         // 'b' deleted at line 2, 'c' added at line 2
         if !result.deletions.is_empty() {
             assert_eq!(result.deletions[0].line_number, 2);

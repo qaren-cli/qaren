@@ -651,13 +651,13 @@ mod diff_chaos {
             .map(|i| format!("new_line_{}", i))
             .collect::<Vec<_>>()
             .join("\n");
-        let result = literal_diff(&content1, &content2, &DiffOptions::default());
+        let result = literal_diff(content1.as_bytes(), content2.as_bytes(), &DiffOptions::default());
         assert!(!result.additions.is_empty() || !result.deletions.is_empty());
     }
 
     #[test]
     fn test_literal_diff_single_char_change() {
-        let result = literal_diff("aaaa\n", "aaab\n", &DiffOptions::default());
+        let result = literal_diff(b"aaaa\n", b"aaab\n", &DiffOptions::default());
         assert!(!result.additions.is_empty() || !result.deletions.is_empty());
     }
 }
@@ -1001,7 +1001,7 @@ mod zero_panic {
         assert!(result.is_identical());
 
         // Literal diff of empty strings
-        let lit = literal_diff("", "", &DiffOptions::default());
+        let lit = literal_diff(b"", b"", &DiffOptions::default());
         assert!(lit.additions.is_empty());
         assert!(lit.deletions.is_empty());
     }

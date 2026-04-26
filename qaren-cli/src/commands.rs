@@ -18,6 +18,18 @@ pub struct SharedDiffOptions {
     /// Ignore all white space (for KV: strips spaces inside values)
     #[arg(short = 'w', long)]
     pub ignore_all_space: bool,
+
+    /// Strip ANSI escape codes from input files
+    #[arg(short = 'A', long)]
+    pub strip_ansi: bool,
+
+    /// Suppress "Insecure file permissions" warnings
+    #[arg(short = 'P', long)]
+    pub no_perm_warn: bool,
+
+    /// Suppress "duplicate key" warnings
+    #[arg(short = 'D', long)]
+    pub no_duplicate_warn: bool,
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -49,6 +61,9 @@ EXIT CODES:
 
   Default behaviour: exit 1 on differences (POSIX standard).
   Run 'qaren config exit toggle' to switch to pipeline-friendly mode (always exit 0).
+
+  Report bugs to: https://qaren.me/community and click 'Open Issue' button
+  Qaren home page: <https://qaren.me/>
 
   To see rich examples and use-cases, run:
   $ qaren --example

@@ -53,6 +53,8 @@ pub struct ParseOptions {
     pub comment_prefixes: Vec<String>,
     /// Compare values case-insensitively (default: `false`)
     pub ignore_case: bool,
+    /// Strip ANSI escape codes from input (default: `false`)
+    pub strip_ansi: bool,
 }
 
 impl Default for ParseOptions {
@@ -62,6 +64,7 @@ impl Default for ParseOptions {
             strip_quotes: false,
             comment_prefixes: vec!["#".to_string(), "//".to_string()],
             ignore_case: false,
+            strip_ansi: false,
         }
     }
 }
@@ -121,6 +124,9 @@ pub struct DiffOptions {
 
     /// Substring keywords. Any key containing these will be ignored (--ignore-keyword)
     pub ignore_keywords: Vec<String>,
+
+    /// Strip ANSI escape codes from input files (-A)
+    pub strip_ansi: bool,
 }
 
 impl DiffOptions {

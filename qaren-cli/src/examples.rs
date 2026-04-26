@@ -28,6 +28,12 @@ pub fn print_examples(subcmd: Option<&str>) {
             println!("    {} {} api.env local.env --output json", "$".bright_black(), "qaren kv".green());
             println!("    {}\n", "Export comparison results in machine-readable JSON format for automation.".bright_black());
 
+            println!("    {} {} api.env local.env --strip-ansi", "$".bright_black(), "qaren kv".green());
+            println!("    {}\n", "Automatically clean terminal color codes (ANSI) from polluted input files.".bright_black());
+
+            println!("    {} {} s1.env s2.env -P -D", "$".bright_black(), "qaren kv".green());
+            println!("    {}\n", "Noise reduction: Suppress permission (-P) and duplicate key (-D) warnings.".bright_black());
+
             println!("    {} {} s1.env s2.env -s", "$".bright_black(), "qaren kv".green());
             println!("    {}\n", "Summary mode: Aggregated warnings and compact diff headers (Red/Green).".bright_black());
 

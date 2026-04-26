@@ -193,8 +193,15 @@ fn parse_line(
     line: &str,
     options: &ParseOptions,
 ) -> Option<(String, String)> {
+    // Fast path: if no ESC character, skip ANSI stripping
+    let line_cleaned: std::borrow::Cow<str> = if line.contains('\x1b') {
+        std::borrow::Cow::Owned(strip_ansi(line))
+    } else {
+        std::borrow::Cow::Borrowed(line)
+    };
+
     // Split at FIRST delimiter only
-    let (key_raw, value_raw) = line.split_once(options.delimiter)?;
+    let (key_raw, value_raw) = line_cleaned.split_once(options.delimiter)?;
 
     // Process the key: trim, strip `export ` prefix, optionally strip quotes
     let key = process_key(key_raw, options);
@@ -208,6 +215,36 @@ fn parse_line(
     let value = process_value(value_raw, options);
 
     Some((key, value))
+}
+
+/// Strip ANSI escape sequences from a string.
+///
+/// Uses a manual byte-scan approach for maximum performance.
+/// Recognizes CSI sequences: ESC [ ... [m, K, etc.]
+pub fn strip_ansi(input: &str) -> String {
+    let bytes = input.as_bytes();
+    let mut result = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    
+    while i < bytes.len() {
+        if bytes[i] == 0x1b && i + 1 < bytes.len() && bytes[i + 1] == b'[' {
+            // Found ESC [ - skip until terminator (m, K, etc)
+            i += 2;
+            while i < bytes.len() {
+                let b = bytes[i];
+                i += 1;
+                // Terminal characters for CSI sequences are typically in the range 0x40-0x7E
+                if b >= 0x40 && b <= 0x7E {
+                    break;
+                }
+            }
+        } else {
+            result.push(bytes[i]);
+            i += 1;
+        }
+    }
+    
+    String::from_utf8_lossy(&result).to_string()
 }
 
 /// Process a key token: trim whitespace, strip `export ` prefix, optionally
@@ -451,6 +488,14 @@ mod tests {
             config.pairs.get("KEY").map(|(v, _)| v.as_str()),
             Some("\"unbalanced")
         );
+    }
+
+    #[test]
+    fn test_ansi_stripping() {
+        // \x1b[32m is Green, \x1b[0m is Reset
+        let content = "\x1b[32mLOG_LEVEL\x1b[0m=info\x1b[0m";
+        let config = parse_default(content);
+        assert_eq!(config.pairs.get("LOG_LEVEL").map(|(v, _)| v.as_str()), Some("info"));
     }
 
     #[test]
