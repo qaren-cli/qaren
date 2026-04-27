@@ -55,7 +55,7 @@
 ## <img src="../icons/icons8-feature-48.png" width="24" height="24"> ویژگی‌های کلیدی
 
 ### ۱. حالت KV معنایی
-درک فایل‌های `.env` ، `.yaml` و `.ini` بدون توجه به ترتیب کلیدها.
+درك فایل‌های `.env` ، `.yaml` و `.ini` بدون توجه به ترتیب کلیدها.
 <p align="center">
   <img src="../icons/Qd2.gif" width="100%" alt="Semantic KV Mode">
 </p>
@@ -93,7 +93,12 @@ cargo install qaren
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> نحوه استفاده و مثال‌ها
 
-حالت `kv` در Qaren برای کارهای واقعی DevOps طراحی شده است. در اینجا الگوهای رایج برای مقایسه فایل‌های محیطی آورده شده است.
+حالت `kv` در Qaren برای کارهای واقعی DevOps طراحی شده است. تمامی مثال‌های زیر با استفاده از داده‌های نمایش داده شده در این دو فایل محیطی (Environment) تست شده‌اند:
+
+<p align="center">
+  <img src="../icons/dev_env.svg" width="45%" alt="محیط توسعه">
+  <img src="../icons/staging_env.svg" width="45%" alt="محیط تست">
+</p>
 
 ### ۱. مقایسه معنایی پایه
 مقایسه معنایی دو فایل با نادیده گرفتن ترتیب خطوط.

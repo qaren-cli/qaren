@@ -93,7 +93,12 @@ cargo install qaren
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> 使い方と例
 
-Qaren の `kv` モードは、実際の DevOps タスク向けに設計されています。以下は、環境ファイルを比較する際の一般的なパターンです。
+Qaren の `kv` モードは、実際の DevOps タスク向けに設計されています。以下のすべての例は、これら2つの環境ファイルに示されているデータを使用してテストされています：
+
+<p align="center">
+  <img src="../icons/dev_env.svg" width="45%" alt="開発環境">
+  <img src="../icons/staging_env.svg" width="45%" alt="ステージング環境">
+</p>
 
 ### 1. 基本的なセマンティック比較
 行の順序を無視して、2つのファイルをセマンティックに比較します。

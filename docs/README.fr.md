@@ -93,7 +93,12 @@ cargo install qaren
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> Utilisation & Exemples
 
-Le mode `kv` de Qaren est conçu pour les tâches DevOps réelles. Voici les modèles courants pour comparer des fichiers d'environnement.
+Le mode `kv` de Qaren est conçu pour les tâches DevOps réelles. Tous les exemples suivants sont testés en utilisant les données présentées dans ces deux fichiers d'environnement :
+
+<p align="center">
+  <img src="../icons/dev_env.svg" width="45%" alt="Environnement de Développement">
+  <img src="../icons/staging_env.svg" width="45%" alt="Environnement de Staging">
+</p>
 
 ### 1. Diff Sémantique de Base
 Comparez deux fichiers sémantiquement, en ignorant l'ordre des lignes.
