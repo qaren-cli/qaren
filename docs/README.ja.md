@@ -93,22 +93,92 @@ cargo install qaren
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> 使い方と例
 
-### セマンティック比較 (KV)
-Qaren の `kv` モードは、実際の DevOps タスク向けに設計されています。以下は、環境ファイルを比較する際の一般的なパターンです：
+Qaren の `kv` モードは、実際の DevOps タスク向けに設計されています。以下は、環境ファイルを比較する際の一般的なパターンです。
 
-| タスク | コマンド | ビジュアル |
-| :--- | :--- | :--- |
-| **基本セマンティック比較** | `qaren kv -Q --d2 ":" dev.env staging.env` | <img src="../icons/Qd2.gif" width="400"> |
-| **サマリーモード** | `qaren kv -Q --d2 ":" dev.env staging.env -s` | <img src="../icons/Qd2s.gif" width="400"> |
-| **JSON エクスポート** | `qaren kv -Q --d2 ":" dev.env staging.env -o json` | <img src="../icons/Qd2o.gif" width="400"> |
-| **機密情報の表示** | `qaren kv -Q --d2 ":" dev.env staging.env -S` | <img src="../icons/Qd2S.gif" width="400"> |
-| **キーの無視** | `qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY` | <img src="../icons/Qd2x.gif" width="400"> |
-| **キーワードの無視**| `qaren kv --ignore-keyword MAX ...` | <img src="../icons/Qd2-ignore-keyword.gif" width="400"> |
-| **クワイエットモード** | `qaren kv -Q --d2 ":" dev.env staging.env -q` | <img src="../icons/Qd2q.gif" width="400"> |
-| **パッチ生成**| `qaren kv ... -g missing.env` | <img src="../icons/Qd2g.gif" width="400"> |
-| **セキュアパッチ** | `qaren kv ... -g missing.env --mask-patches` | <img src="../icons/Qd2g-masked.gif" width="400"> |
+### 1. 基本的なセマンティック比較
+行の順序を無視して、2つのファイルをセマンティックに比較します。
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env
+```
+<p align="center">
+  <img src="../icons/Qd2.gif" width="100%" alt="基本的なセマンティック比較">
+</p>
 
-### リテラル比較 (Diff)
+### 2. サマリーモード
+詳細な行の変更を表示せずに、差異の全体像を把握します。
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -s
+```
+<p align="center">
+  <img src="../icons/Qd2s.gif" width="100%" alt="サマリーモード">
+</p>
+
+### 3. JSON エクスポート
+自動化のために、マシンが読み取り可能な形式で結果をエクスポートします。
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -o json
+```
+<p align="center">
+  <img src="../icons/Qd2o.gif" width="100%" alt="JSON エクスポート">
+</p>
+
+### 4. 機密情報の表示
+自動マスキングをバイパスして、生の機密値を表示します。
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -S
+```
+<p align="center">
+  <img src="../icons/Qd2S.gif" width="100%" alt="機密情報の表示">
+</p>
+
+### 5. 特定のキーを無視
+既知の動的なキーや無関係なキーを比較から除外します。
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY
+```
+<p align="center">
+  <img src="../icons/Qd2x.gif" width="100%" alt="キーの無視">
+</p>
+
+### 6. キーワードで無視
+特定の文字列を含むすべてのキーを除外します。
+```bash
+qaren kv --ignore-keyword MAX ...
+```
+<p align="center">
+  <img src="../icons/Qd2-ignore-keyword.gif" width="100%" alt="キーワードで無視">
+</p>
+
+### 7. クワイエットモード
+終了コードのみを使用して、スクリプト内での互換性を確認します。
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -q
+```
+<p align="center">
+  <img src="../icons/Qd2q.gif" width="100%" alt="クワイエットモード">
+</p>
+
+### 8. パッチ生成
+欠落しているキーを同期するためのパッチファイルを作成します。
+```bash
+qaren kv ... -g missing.env
+```
+<p align="center">
+  <img src="../icons/Qd2g.gif" width="100%" alt="パッチ生成">
+</p>
+
+### 9. セキュアパッチ
+機密データを自動的にマスクした状態でパッチを生成します。
+```bash
+qaren kv ... -g missing.env --mask-patches
+```
+<p align="center">
+  <img src="../icons/Qd2g-masked.gif" width="100%" alt="セキュアパッチ">
+</p>
+
+---
+
+## <img src="../icons/icons8-rust-48.png" width="24" height="24"> リテラル比較 (Diff)
 ```bash
 # 統合 diff 形式 (POSIX 準拠)
 qaren diff file1.txt file2.txt -u

@@ -34,7 +34,7 @@
 
 ## Pourquoi Qaren ? <img src="../icons/favicon.png" width="24" height="24"> &nbsp; [<img src="../icons/icons8-linkedin-48.png" width="24" height="24">](https://www.linkedin.com/in/alielesawy) &nbsp; [<img src="../icons/icons8-github-48.png" width="24" height="24">](https://github.com/alielesawy)
 
-L'outil standard POSIX `diff` nous sert depuis 50 years, mais il a été conçu pour le code source, et non pour les fichiers de configuration complexes et indépendants de l'ordre, ni pour les sauvegardes système massives d'aujourd'hui.
+L'outil standard POSIX `diff` nous sert depuis 50 ans, mais il a été conçu pour le code source, et non pour les fichiers de configuration complexes et indépendants de l'ordre, ni pour les sauvegardes système massives d'aujourd'hui.
 
 Qaren (arabe pour **"Comparer"**) est un outil multi-paradigme qui comprend vos données.
 
@@ -93,22 +93,92 @@ cargo install qaren
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> Utilisation & Exemples
 
-### Comparaison Sémantique (KV)
-Le mode `kv` de Qaren est conçu pour les tâches DevOps réelles. Voici les modèles courants pour comparer des fichiers d'environnement :
+Le mode `kv` de Qaren est conçu pour les tâches DevOps réelles. Voici les modèles courants pour comparer des fichiers d'environnement.
 
-| Tâche | Commande | Visuel |
-| :--- | :--- | :--- |
-| **Diff Sémantique de Base** | `qaren kv -Q --d2 ":" dev.env staging.env` | <img src="../icons/Qd2.gif" width="400"> |
-| **Mode Résumé** | `qaren kv -Q --d2 ":" dev.env staging.env -s` | <img src="../icons/Qd2s.gif" width="400"> |
-| **Export JSON** | `qaren kv -Q --d2 ":" dev.env staging.env -o json` | <img src="../icons/Qd2o.gif" width="400"> |
-| **Afficher les Secrets** | `qaren kv -Q --d2 ":" dev.env staging.env -S` | <img src="../icons/Qd2S.gif" width="400"> |
-| **Ignorer des Clés** | `qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY` | <img src="../icons/Qd2x.gif" width="400"> |
-| **Ignorer des Mots-clés**| `qaren kv --ignore-keyword MAX ...` | <img src="../icons/Qd2-ignore-keyword.gif" width="400"> |
-| **Mode Silencieux** | `qaren kv -Q --d2 ":" dev.env staging.env -q` | <img src="../icons/Qd2q.gif" width="400"> |
-| **Génération de Patch**| `qaren kv ... -g missing.env` | <img src="../icons/Qd2g.gif" width="400"> |
-| **Patches Sécurisés** | `qaren kv ... -g missing.env --mask-patches` | <img src="../icons/Qd2g-masked.gif" width="400"> |
+### 1. Diff Sémantique de Base
+Comparez deux fichiers sémantiquement, en ignorant l'ordre des lignes.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env
+```
+<p align="center">
+  <img src="../icons/Qd2.gif" width="100%" alt="Basic Semantic Diff">
+</p>
 
-### Comparaison Littérale (Diff)
+### 2. Mode Résumé
+Obtenez un aperçu général des différences sans les changements détaillés par ligne.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -s
+```
+<p align="center">
+  <img src="../icons/Qd2s.gif" width="100%" alt="Mode Résumé">
+</p>
+
+### 3. Export JSON
+Exportez les résultats dans un format lisible par machine pour l'automatisation.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -o json
+```
+<p align="center">
+  <img src="../icons/Qd2o.gif" width="100%" alt="Export JSON">
+</p>
+
+### 4. Afficher les Secrets
+Contournez le masquage automatique pour voir les valeurs sensibles brutes.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -S
+```
+<p align="center">
+  <img src="../icons/Qd2S.gif" width="100%" alt="Afficher les Secrets">
+</p>
+
+### 5. Ignorer des Clés Spécifiques
+Excluez du comparatif des clés dynamiques ou non pertinentes connues.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY
+```
+<p align="center">
+  <img src="../icons/Qd2x.gif" width="100%" alt="Ignorer des Clés">
+</p>
+
+### 6. Ignorer par Mot-clé
+Excluez toutes les clés contenant une sous-chaîne spécifique.
+```bash
+qaren kv --ignore-keyword MAX ...
+```
+<p align="center">
+  <img src="../icons/Qd2-ignore-keyword.gif" width="100%" alt="Ignorer par Mot-clé">
+</p>
+
+### 7. Mode Silencieux
+Vérifiez la compatibilité dans les scripts via les codes de sortie uniquement.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -q
+```
+<p align="center">
+  <img src="../icons/Qd2q.gif" width="100%" alt="Mode Silencieux">
+</p>
+
+### 8. Génération de Patch
+Créez un fichier de patch pour synchroniser les clés manquantes.
+```bash
+qaren kv ... -g missing.env
+```
+<p align="center">
+  <img src="../icons/Qd2g.gif" width="100%" alt="Génération de Patch">
+</p>
+
+### 9. Patches Sécurisés
+Générez des patches avec les données sensibles automatiquement masquées.
+```bash
+qaren kv ... -g missing.env --mask-patches
+```
+<p align="center">
+  <img src="../icons/Qd2g-masked.gif" width="100%" alt="Patches Sécurisés">
+</p>
+
+---
+
+## <img src="../icons/icons8-rust-48.png" width="24" height="24"> Comparaison Littérale (Diff)
 ```bash
 # Format unified diff (conforme POSIX)
 qaren diff file1.txt file2.txt -u

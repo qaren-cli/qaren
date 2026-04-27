@@ -93,22 +93,92 @@ cargo install qaren
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> 使用方法与示例
 
-### 语义化对比 (KV)
-Qaren 的 `kv` 模式专为真实世界的 DevOps 任务设计。以下是对比环境文件的常用模式：
+Qaren 的 `kv` 模式专为真实世界的 DevOps 任务设计。以下是对比环境文件的常用模式。
 
-| 任务 | 命令 | 视觉演示 |
-| :--- | :--- | :--- |
-| **基础语义对比** | `qaren kv -Q --d2 ":" dev.env staging.env` | <img src="../icons/Qd2.gif" width="400"> |
-| **概要模式** | `qaren kv -Q --d2 ":" dev.env staging.env -s` | <img src="../icons/Qd2s.gif" width="400"> |
-| **导出 JSON** | `qaren kv -Q --d2 ":" dev.env staging.env -o json` | <img src="../icons/Qd2o.gif" width="400"> |
-| **显示敏感信息** | `qaren kv -Q --d2 ":" dev.env staging.env -S` | <img src="../icons/Qd2S.gif" width="400"> |
-| **忽略特定键** | `qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY` | <img src="../icons/Qd2x.gif" width="400"> |
-| **忽略关键词** | `qaren kv --ignore-keyword MAX ...` | <img src="../icons/Qd2-ignore-keyword.gif" width="400"> |
-| **静默模式** | `qaren kv -Q --d2 ":" dev.env staging.env -q` | <img src="../icons/Qd2q.gif" width="400"> |
-| **补丁生成** | `qaren kv ... -g missing.env` | <img src="../icons/Qd2g.gif" width="400"> |
-| **安全补丁** | `qaren kv ... -g missing.env --mask-patches` | <img src="../icons/Qd2g-masked.gif" width="400"> |
+### 1. 基础语义对比
+语义化对比两个文件，忽略行顺序。
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env
+```
+<p align="center">
+  <img src="../icons/Qd2.gif" width="100%" alt="Basic Semantic Diff">
+</p>
 
-### 字面量对比 (Diff)
+### 2. 概要模式
+获取差异的高级概览，不显示详细的行更改。
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -s
+```
+<p align="center">
+  <img src="../icons/Qd2s.gif" width="100%" alt="Summary Mode">
+</p>
+
+### 3. 导出 JSON
+以机器可读格式导出结果，以便实现自动化。
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -o json
+```
+<p align="center">
+  <img src="../icons/Qd2o.gif" width="100%" alt="JSON Export">
+</p>
+
+### 4. 显示敏感信息
+绕过自动遮盖以查看原始敏感值。
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -S
+```
+<p align="center">
+  <img src="../icons/Qd2S.gif" width="100%" alt="Show Secrets">
+</p>
+
+### 5. 忽略特定键
+从对比中排除已知的动态或不相关键。
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY
+```
+<p align="center">
+  <img src="../icons/Qd2x.gif" width="100%" alt="Ignore Keys">
+</p>
+
+### 6. 按关键词忽略
+排除所有包含特定子字符串的键。
+```bash
+qaren kv --ignore-keyword MAX ...
+```
+<p align="center">
+  <img src="../icons/Qd2-ignore-keyword.gif" width="100%" alt="Ignore Keyword">
+</p>
+
+### 7. 静默模式
+仅通过退出代码在脚本中检查兼容性。
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -q
+```
+<p align="center">
+  <img src="../icons/Qd2q.gif" width="100%" alt="Quiet Mode">
+</p>
+
+### 8. 补丁生成
+创建补丁文件以同步缺失的键。
+```bash
+qaren kv ... -g missing.env
+```
+<p align="center">
+  <img src="../icons/Qd2g.gif" width="100%" alt="Patch Generation">
+</p>
+
+### 9. 安全补丁
+生成敏感数据自动遮盖的补丁。
+```bash
+qaren kv ... -g missing.env --mask-patches
+```
+<p align="center">
+  <img src="../icons/Qd2g-masked.gif" width="100%" alt="Secure Patches">
+</p>
+
+---
+
+## <img src="../icons/icons8-rust-48.png" width="24" height="24"> 字面量对比 (Diff)
 ```bash
 # 统一 diff 格式（符合 POSIX 标准）
 qaren diff file1.txt file2.txt -u

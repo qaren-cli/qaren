@@ -93,22 +93,92 @@ cargo install qaren
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> الاستخدام وأمثلة
 
-### المقارنة الدلالية (KV)
-صُمم نمط `kv` في "قارن" لمهام DevOps الواقعية. فيما يلي الأنماط الشائعة المستخدمة لمقارنة ملفات البيئة:
+صُمم نمط `kv` في "قارن" لمهام DevOps الواقعية. فيما يلي الأنماط الشائعة المستخدمة لمقارنة ملفات البيئة.
 
-| المهمة | الأمر | العرض المرئي |
-| :--- | :--- | :--- |
-| **مقارنة دلالية أساسية** | `qaren kv -Q --d2 ":" dev.env staging.env` | <img src="../icons/Qd2.gif" width="400"> |
-| **نمط الملخص** | `qaren kv -Q --d2 ":" dev.env staging.env -s` | <img src="../icons/Qd2s.gif" width="400"> |
-| **تصدير JSON** | `qaren kv -Q --d2 ":" dev.env staging.env -o json` | <img src="../icons/Qd2o.gif" width="400"> |
-| **إظهار الأسرار** | `qaren kv -Q --d2 ":" dev.env staging.env -S` | <img src="../icons/Qd2S.gif" width="400"> |
-| **تجاهل المفاتيح** | `qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY` | <img src="../icons/Qd2x.gif" width="400"> |
-| **تجاهل الكلمات المفتاحية**| `qaren kv --ignore-keyword MAX ...` | <img src="../icons/Qd2-ignore-keyword.gif" width="400"> |
-| **النمط الهادئ** | `qaren kv -Q --d2 ":" dev.env staging.env -q` | <img src="../icons/Qd2q.gif" width="400"> |
-| **إنشاء رقعة (Patch)**| `qaren kv ... -g missing.env` | <img src="../icons/Qd2g.gif" width="400"> |
-| **رقع آمنة** | `qaren kv ... -g missing.env --mask-patches` | <img src="../icons/Qd2g-masked.gif" width="400"> |
+### 1. مقارنة دلالية أساسية
+مقارنة ملفين دلالياً مع تجاهل ترتيب الأسطر.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env
+```
+<p align="center">
+  <img src="../icons/Qd2.gif" width="100%" alt="Basic Semantic Diff">
+</p>
 
-### المقارنة الحرفية (Diff)
+### 2. نمط الملخص
+احصل على نظرة عامة عالية المستوى على الاختلافات دون تغييرات تفصيلية في الأسطر.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -s
+```
+<p align="center">
+  <img src="../icons/Qd2s.gif" width="100%" alt="Summary Mode">
+</p>
+
+### 3. تصدير JSON
+تصدير النتائج بتنسيق قابل للقراءة آلياً للأتمتة.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -o json
+```
+<p align="center">
+  <img src="../icons/Qd2o.gif" width="100%" alt="JSON Export">
+</p>
+
+### 4. إظهار الأسرار
+تجاوز الإخفاء التلقائي لرؤية القيم الحساسة الخام.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -S
+```
+<p align="center">
+  <img src="../icons/Qd2S.gif" width="100%" alt="Show Secrets">
+</p>
+
+### 5. تجاهل مفاتيح معينة
+استبعاد المفاتيح الديناميكية المعروفة أو غير ذات الصلة من المقارنة.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY
+```
+<p align="center">
+  <img src="../icons/Qd2x.gif" width="100%" alt="Ignore Keys">
+</p>
+
+### 6. تجاهل بواسطة الكلمة المفتاحية
+استبعاد جميع المفاتيح التي تحتوي على سلسلة فرعية محددة.
+```bash
+qaren kv --ignore-keyword MAX ...
+```
+<p align="center">
+  <img src="../icons/Qd2-ignore-keyword.gif" width="100%" alt="Ignore Keyword">
+</p>
+
+### 7. النمط الهادئ
+التحقق من التوافق في البرامج النصية عبر أكواد الخروج فقط.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -q
+```
+<p align="center">
+  <img src="../icons/Qd2q.gif" width="100%" alt="Quiet Mode">
+</p>
+
+### 8. إنشاء رقعة (Patch)
+إنشاء ملف رقعة لمزامنة المفاتيح المفقودة.
+```bash
+qaren kv ... -g missing.env
+```
+<p align="center">
+  <img src="../icons/Qd2g.gif" width="100%" alt="Patch Generation">
+</p>
+
+### 9. رقع آمنة
+إنشاء رقع مع إخفاء البيانات الحساسة تلقائياً.
+```bash
+qaren kv ... -g missing.env --mask-patches
+```
+<p align="center">
+  <img src="../icons/Qd2g-masked.gif" width="100%" alt="Secure Patches">
+</p>
+
+---
+
+## <img src="../icons/icons8-rust-48.png" width="24" height="24"> المقارنة الحرفية (Diff)
 ```bash
 # تنسيق unified diff (متوافق مع POSIX)
 qaren diff file1.txt file2.txt -u

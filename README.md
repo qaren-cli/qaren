@@ -93,22 +93,92 @@ cargo install qaren
 
 ## <img src="icons/icons8-rust-48.png" width="24" height="24"> Usage & Examples
 
-### Semantic Comparison (KV)
-Qaren's `kv` mode is designed for real-world DevOps tasks. Below are common patterns used to compare environment files:
+Qaren's `kv` mode is designed for real-world DevOps tasks. Below are common patterns used to compare environment files.
 
-| Task | Command | Visual |
-| :--- | :--- | :--- |
-| **Basic Semantic Diff** | `qaren kv -Q --d2 ":" dev.env staging.env` | <img src="icons/Qd2.gif" width="400"> |
-| **Summary Mode** | `qaren kv -Q --d2 ":" dev.env staging.env -s` | <img src="icons/Qd2s.gif" width="400"> |
-| **JSON Export** | `qaren kv -Q --d2 ":" dev.env staging.env -o json` | <img src="icons/Qd2o.gif" width="400"> |
-| **Show Secrets** | `qaren kv -Q --d2 ":" dev.env staging.env -S` | <img src="icons/Qd2S.gif" width="400"> |
-| **Ignore Keys** | `qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY` | <img src="icons/Qd2x.gif" width="400"> |
-| **Ignore Keywords**| `qaren kv --ignore-keyword MAX ...` | <img src="icons/Qd2-ignore-keyword.gif" width="400"> |
-| **Quiet Mode** | `qaren kv -Q --d2 ":" dev.env staging.env -q` | <img src="icons/Qd2q.gif" width="400"> |
-| **Patch Generation**| `qaren kv ... -g missing.env` | <img src="icons/Qd2g.gif" width="400"> |
-| **Secure Patches** | `qaren kv ... -g missing.env --mask-patches` | <img src="icons/Qd2g-masked.gif" width="400"> |
+### 1. Basic Semantic Diff
+Compare two files semantically, ignoring line order.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env
+```
+<p align="center">
+  <img src="icons/Qd2.gif" width="100%" alt="Basic Semantic Diff">
+</p>
 
-### Literal Comparison (Diff)
+### 2. Summary Mode
+Get a high-level overview of differences without detailed line changes.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -s
+```
+<p align="center">
+  <img src="icons/Qd2s.gif" width="100%" alt="Summary Mode">
+</p>
+
+### 3. JSON Export
+Export results in machine-readable format for automation.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -o json
+```
+<p align="center">
+  <img src="icons/Qd2o.gif" width="100%" alt="JSON Export">
+</p>
+
+### 4. Show Secrets
+Bypass automatic masking to see raw sensitive values.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -S
+```
+<p align="center">
+  <img src="icons/Qd2S.gif" width="100%" alt="Show Secrets">
+</p>
+
+### 5. Ignore Specific Keys
+Exclude known dynamic or irrelevant keys from comparison.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY
+```
+<p align="center">
+  <img src="icons/Qd2x.gif" width="100%" alt="Ignore Keys">
+</p>
+
+### 6. Ignore by Keyword
+Exclude all keys containing a specific substring.
+```bash
+qaren kv --ignore-keyword MAX ...
+```
+<p align="center">
+  <img src="icons/Qd2-ignore-keyword.gif" width="100%" alt="Ignore Keyword">
+</p>
+
+### 7. Quiet Mode
+Check compatibility in scripts via exit codes only.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -q
+```
+<p align="center">
+  <img src="icons/Qd2q.gif" width="100%" alt="Quiet Mode">
+</p>
+
+### 8. Patch Generation
+Create a patch file to synchronize missing keys.
+```bash
+qaren kv ... -g missing.env
+```
+<p align="center">
+  <img src="icons/Qd2g.gif" width="100%" alt="Patch Generation">
+</p>
+
+### 9. Secure Patching
+Generate patches with sensitive data automatically masked.
+```bash
+qaren kv ... -g missing.env --mask-patches
+```
+<p align="center">
+  <img src="icons/Qd2g-masked.gif" width="100%" alt="Secure Patches">
+</p>
+
+---
+
+## <img src="icons/icons8-rust-48.png" width="24" height="24"> Literal Comparison (Diff)
 ```bash
 # Unified diff format (POSIX compliant)
 qaren diff file1.txt file2.txt -u

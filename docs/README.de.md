@@ -93,22 +93,92 @@ cargo install qaren
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> Nutzung & Beispiele
 
-### Semantischer Vergleich (KV)
-Der `kv`-Modus von Qaren ist für reale DevOps-Aufgaben konzipiert. Hier sind gängige Muster zum Vergleich von Umgebungsdateien:
+Der `kv`-Modus von Qaren ist für reale DevOps-Aufgaben konzipiert. Hier sind gängige Muster zum Vergleich von Umgebungsdateien.
 
-| Aufgabe | Befehl | Visualisierung |
-| :--- | :--- | :--- |
-| **Basis Semantik-Diff** | `qaren kv -Q --d2 ":" dev.env staging.env` | <img src="../icons/Qd2.gif" width="400"> |
-| **Zusammenfassungsmodus** | `qaren kv -Q --d2 ":" dev.env staging.env -s` | <img src="../icons/Qd2s.gif" width="400"> |
-| **JSON Export** | `qaren kv -Q --d2 ":" dev.env staging.env -o json` | <img src="../icons/Qd2o.gif" width="400"> |
-| **Geheimnisse zeigen** | `qaren kv -Q --d2 ":" dev.env staging.env -S` | <img src="../icons/Qd2S.gif" width="400"> |
-| **Schlüssel ignorieren** | `qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY` | <img src="../icons/Qd2x.gif" width="400"> |
-| **Keywords ignorieren**| `qaren kv --ignore-keyword MAX ...` | <img src="../icons/Qd2-ignore-keyword.gif" width="400"> |
-| **Stiller Modus** | `qaren kv -Q --d2 ":" dev.env staging.env -q` | <img src="../icons/Qd2q.gif" width="400"> |
-| **Patch-Generierung**| `qaren kv ... -g missing.env` | <img src="../icons/Qd2g.gif" width="400"> |
-| **Sichere Patches** | `qaren kv ... -g missing.env --mask-patches` | <img src="../icons/Qd2g-masked.gif" width="400"> |
+### 1. Basis Semantik-Diff
+Vergleichen Sie zwei Dateien semantisch, wobei die Zeilenreihenfolge ignoriert wird.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env
+```
+<p align="center">
+  <img src="../icons/Qd2.gif" width="100%" alt="Basis Semantik-Diff">
+</p>
 
-### Wörtlicher Vergleich (Diff)
+### 2. Zusammenfassungsmodus
+Erhalten Sie einen allgemeinen Überblick über die Unterschiede ohne detaillierte Zeilenänderungen.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -s
+```
+<p align="center">
+  <img src="../icons/Qd2s.gif" width="100%" alt="Zusammenfassungsmodus">
+</p>
+
+### 3. JSON Export
+Exportieren Sie die Ergebnisse in einem maschinenlesbaren Format für die Automatisierung.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -o json
+```
+<p align="center">
+  <img src="../icons/Qd2o.gif" width="100%" alt="JSON Export">
+</p>
+
+### 4. Geheimnisse zeigen
+Umgehen Sie die automatische Maskierung, um rohe sensible Werte zu sehen.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -S
+```
+<p align="center">
+  <img src="../icons/Qd2S.gif" width="100%" alt="Geheimnisse zeigen">
+</p>
+
+### 5. Schlüssel ignorieren
+Schließen Sie bekannte dynamische oder irrelevante Schlüssel vom Vergleich aus.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY
+```
+<p align="center">
+  <img src="../icons/Qd2x.gif" width="100%" alt="Schlüssel ignorieren">
+</p>
+
+### 6. Ignorieren nach Schlüsselwort
+Schließen Sie alle Schlüssel aus, die eine bestimmte Teilzeichenfolge enthalten.
+```bash
+qaren kv --ignore-keyword MAX ...
+```
+<p align="center">
+  <img src="../icons/Qd2-ignore-keyword.gif" width="100%" alt="Keywords ignorieren">
+</p>
+
+### 7. Stiller Modus
+Prüfen Sie die Kompatibilität in Skripten nur über Exit-Codes.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -q
+```
+<p align="center">
+  <img src="../icons/Qd2q.gif" width="100%" alt="Stiller Modus">
+</p>
+
+### 8. Patch-Generierung
+Erstellen Sie eine Patch-Datei, um fehlende Schlüssel zu synchronisieren.
+```bash
+qaren kv ... -g missing.env
+```
+<p align="center">
+  <img src="../icons/Qd2g.gif" width="100%" alt="Patch-Generierung">
+</p>
+
+### 9. Sichere Patches
+Generieren Sie Patches, bei denen sensible Daten automatisch maskiert werden.
+```bash
+qaren kv ... -g missing.env --mask-patches
+```
+<p align="center">
+  <img src="../icons/Qd2g-masked.gif" width="100%" alt="Sichere Patches">
+</p>
+
+---
+
+## <img src="../icons/icons8-rust-48.png" width="24" height="24"> Wörtlicher Vergleich (Diff)
 ```bash
 # Unified-Diff-Format (POSIX-konform)
 qaren diff file1.txt file2.txt -u

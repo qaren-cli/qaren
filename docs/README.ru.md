@@ -93,22 +93,92 @@ cargo install qaren
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> Использование и примеры
 
-### Семантическое сравнение (KV)
-Режим `kv` в Qaren разработан для реальных задач DevOps. Ниже приведены распространенные шаблоны для сравнения файлов окружения:
+Режим `kv` в Qaren разработан для реальных задач DevOps. Ниже приведены распространенные шаблоны для сравнения файлов окружения.
 
-| Задача | Команда | Визуализация |
-| :--- | :--- | :--- |
-| **Базовый семантический diff** | `qaren kv -Q --d2 ":" dev.env staging.env` | <img src="../icons/Qd2.gif" width="400"> |
-| **Режим сводки** | `qaren kv -Q --d2 ":" dev.env staging.env -s` | <img src="../icons/Qd2s.gif" width="400"> |
-| **Экспорт в JSON** | `qaren kv -Q --d2 ":" dev.env staging.env -o json` | <img src="../icons/Qd2o.gif" width="400"> |
-| **Показать секреты** | `qaren kv -Q --d2 ":" dev.env staging.env -S` | <img src="../icons/Qd2S.gif" width="400"> |
-| **Игнорировать ключи** | `qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY` | <img src="../icons/Qd2x.gif" width="400"> |
-| **Игнорировать ключевые слова**| `qaren kv --ignore-keyword MAX ...` | <img src="../icons/Qd2-ignore-keyword.gif" width="400"> |
-| **Тихий режим** | `qaren kv -Q --d2 ":" dev.env staging.env -q` | <img src="../icons/Qd2q.gif" width="400"> |
-| **Генерация патча**| `qaren kv ... -g missing.env` | <img src="../icons/Qd2g.gif" width="400"> |
-| **Безопасные патчи** | `qaren kv ... -g missing.env --mask-patches` | <img src="../icons/Qd2g-masked.gif" width="400"> |
+### 1. Базовый семантический diff
+Сравните два файла семантически, игнорируя порядок строк.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env
+```
+<p align="center">
+  <img src="../icons/Qd2.gif" width="100%" alt="Базовый семантический diff">
+</p>
 
-### Литеральное сравнение (Diff)
+### 2. Режим сводки
+Получите высокоуровневый обзор различий без подробных изменений по строкам.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -s
+```
+<p align="center">
+  <img src="../icons/Qd2s.gif" width="100%" alt="Режим сводки">
+</p>
+
+### 3. Экспорт в JSON
+Экспортируйте результаты в машиночитаемом формате для автоматизации.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -o json
+```
+<p align="center">
+  <img src="../icons/Qd2o.gif" width="100%" alt="Экспорт в JSON">
+</p>
+
+### 4. Показать секреты
+Обойдите автоматическое маскирование, чтобы увидеть необработанные конфиденциальные значения.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -S
+```
+<p align="center">
+  <img src="../icons/Qd2S.gif" width="100%" alt="Показать секреты">
+</p>
+
+### 5. Игнорировать ключи
+Исключите известные динамические или нерелевантные ключи из сравнения.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY
+```
+<p align="center">
+  <img src="../icons/Qd2x.gif" width="100%" alt="Игнорировать ключи">
+</p>
+
+### 6. Игнорировать по ключевому слову
+Исключите все ключи, содержащие определенную подстроку.
+```bash
+qaren kv --ignore-keyword MAX ...
+```
+<p align="center">
+  <img src="../icons/Qd2-ignore-keyword.gif" width="100%" alt="Игнорировать по ключевому слову">
+</p>
+
+### 7. Тихий режим
+Проверяйте совместимость в скриптах только через коды выхода.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -q
+```
+<p align="center">
+  <img src="../icons/Qd2q.gif" width="100%" alt="Тихий режим">
+</p>
+
+### 8. Генерация патча
+Создайте файл патча для синхронизации отсутствующих ключей.
+```bash
+qaren kv ... -g missing.env
+```
+<p align="center">
+  <img src="../icons/Qd2g.gif" width="100%" alt="Генерация патча">
+</p>
+
+### 9. Безопасные патчи
+Генерируйте патчи с автоматически замаскированными конфиденциальными данными.
+```bash
+qaren kv ... -g missing.env --mask-patches
+```
+<p align="center">
+  <img src="../icons/Qd2g-masked.gif" width="100%" alt="Безопасные патчи">
+</p>
+
+---
+
+## <img src="../icons/icons8-rust-48.png" width="24" height="24"> Литеральное сравнение (Diff)
 ```bash
 # Формат unified diff (совместим с POSIX)
 qaren diff file1.txt file2.txt -u

@@ -93,22 +93,92 @@ cargo install qaren
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> نحوه استفاده و مثال‌ها
 
-### مقایسه معنایی (KV)
-حالت `kv` در Qaren برای کارهای واقعی DevOps طراحی شده است. در اینجا الگوهای رایج برای مقایسه فایل‌های محیطی آورده شده است:
+حالت `kv` در Qaren برای کارهای واقعی DevOps طراحی شده است. در اینجا الگوهای رایج برای مقایسه فایل‌های محیطی آورده شده است.
 
-| کار | دستور | نمایش بصری |
-| :--- | :--- | :--- |
-| **مقایسه معنایی پایه** | `qaren kv -Q --d2 ":" dev.env staging.env` | <img src="../icons/Qd2.gif" width="400"> |
-| **حالت خلاصه** | `qaren kv -Q --d2 ":" dev.env staging.env -s` | <img src="../icons/Qd2s.gif" width="400"> |
-| **خروجی JSON** | `qaren kv -Q --d2 ":" dev.env staging.env -o json` | <img src="../icons/Qd2o.gif" width="400"> |
-| **نمایش اطلاعات حساس** | `qaren kv -Q --d2 ":" dev.env staging.env -S` | <img src="../icons/Qd2S.gif" width="400"> |
-| **نادیده گرفتن کلیدها** | `qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY` | <img src="../icons/Qd2x.gif" width="400"> |
-| **نادیده گرفتن کلمات کلیدی**| `qaren kv --ignore-keyword MAX ...` | <img src="../icons/Qd2-ignore-keyword.gif" width="400"> |
-| **حالت بیصدا** | `qaren kv -Q --d2 ":" dev.env staging.env -q` | <img src="../icons/Qd2q.gif" width="400"> |
-| **تولید فایل وصله**| `qaren kv ... -g missing.env` | <img src="../icons/Qd2g.gif" width="400"> |
-| **وصله‌های امن** | `qaren kv ... -g missing.env --mask-patches` | <img src="../icons/Qd2g-masked.gif" width="400"> |
+### ۱. مقایسه معنایی پایه
+مقایسه معنایی دو فایل با نادیده گرفتن ترتیب خطوط.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env
+```
+<p align="center">
+  <img src="../icons/Qd2.gif" width="100%" alt="Basic Semantic Diff">
+</p>
 
-### مقایسه حرفی (Diff)
+### ۲. حالت خلاصه
+دریافت یک نمای کلی از تفاوت‌ها بدون نمایش جزئیات تغییرات هر خط.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -s
+```
+<p align="center">
+  <img src="../icons/Qd2s.gif" width="100%" alt="Summary Mode">
+</p>
+
+### ۳. خروجی JSON
+استخراج نتایج در قالب قابل خواندن توسط ماشین برای خودکارسازی.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -o json
+```
+<p align="center">
+  <img src="../icons/Qd2o.gif" width="100%" alt="JSON Export">
+</p>
+
+### ۴. نمایش اطلاعات حساس
+نادیده گرفتن مخفی‌سازی خودکار برای مشاهده مقادیر حساس واقعی.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -S
+```
+<p align="center">
+  <img src="../icons/Qd2S.gif" width="100%" alt="Show Secrets">
+</p>
+
+### ۵. نادیده گرفتن کلیدهای خاص
+مستثنی کردن کلیدهای داینامیک یا غیرمرتبط از فرآیند مقایسه.
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY
+```
+<p align="center">
+  <img src="../icons/Qd2x.gif" width="100%" alt="Ignore Keys">
+</p>
+
+### ۶. نادیده گرفتن با استفاده از کلمه کلیدی
+مستثنی کردن تمام کلیدهایی که شامل یک رشته خاص هستند.
+```bash
+qaren kv --ignore-keyword MAX ...
+```
+<p align="center">
+  <img src="../icons/Qd2-ignore-keyword.gif" width="100%" alt="Ignore Keyword">
+</p>
+
+### ۷. حالت بیصدا
+بررسی سازگاری در اسکریپت‌ها فقط از طریق کدهای خروجی (Exit Codes).
+```bash
+qaren kv -Q --d2 ":" dev.env staging.env -q
+```
+<p align="center">
+  <img src="../icons/Qd2q.gif" width="100%" alt="Quiet Mode">
+</p>
+
+### ۸. تولید فایل وصله
+ایجاد فایل وصله برای همگام‌سازی کلیدهای مفقود.
+```bash
+qaren kv ... -g missing.env
+```
+<p align="center">
+  <img src="../icons/Qd2g.gif" width="100%" alt="Patch Generation">
+</p>
+
+### ۹. وصله‌های امن
+تولید وصله‌ها در حالی که اطلاعات حساس به طور خودکار مخفی شده‌اند.
+```bash
+qaren kv ... -g missing.env --mask-patches
+```
+<p align="center">
+  <img src="../icons/Qd2g-masked.gif" width="100%" alt="Secure Patches">
+</p>
+
+---
+
+## <img src="../icons/icons8-rust-48.png" width="24" height="24"> مقایسه حرفی (Diff)
 ```bash
 # فرمت unified diff (سازگار با POSIX)
 qaren diff file1.txt file2.txt -u
