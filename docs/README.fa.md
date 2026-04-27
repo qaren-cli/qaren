@@ -10,7 +10,9 @@
   <a href="README.ru.md">Русский</a> | 
   <a href="README.ar.md">العربية</a> | 
   <a href="README.fa.md">فارسی</a> | 
-  <a href="README.ja.md">日本語</a>
+  <a href="README.ja.md">日本語</a> | 
+  <a href="README.de.md">Deutsch</a> | 
+  <a href="README.fr.md">Français</a>
 </p>
 
 <p align="center">
@@ -21,7 +23,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/rust-stable-brightgreen.svg" alt="Rust">
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
-  <img src="https://img.shields.io/badge/version-1.0.0-orange.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.0.1-orange.svg" alt="Version">
   <img src="https://img.shields.io/badge/PRs-welcome-cyan.svg" alt="PRs Welcome">
   <a href="https://github.com/qaren-cli/qaren/actions/workflows/release.yml">
     <img src="https://github.com/qaren-cli/qaren/actions/workflows/release.yml/badge.svg?branch=master" alt="Release">
@@ -52,7 +54,13 @@
 
 ## <img src="../icons/icons8-feature-48.png" width="24" height="24"> ویژگی‌های کلیدی
 
-### ۱. خروجی متنی بهبود یافته
+### ۱. حالت KV معنایی
+درک فایل‌های `.env` ، `.yaml` و `.ini` بدون توجه به ترتیب کلیدها.
+<p align="center">
+  <img src="../icons/Qd2.gif" width="100%" alt="Semantic KV Mode">
+</p>
+
+### ۲. خروجی متنی بهبود یافته
 Qaren مقایسه خط به خط بسیار واضح‌تری نسبت به POSIX diff ارائه می‌دهد که مخصوصاً برای تحلیل فایل‌های نسخه پشتیبان سیستم بهینه شده است.
 ```bash
 $ qaren diff backup-old backup-new -w
@@ -60,30 +68,25 @@ $ qaren diff backup-old backup-new -w
 +[L47] TimeoutOverflowWarning: 3000010000 does not fit into a 32-bit integer.
 ```
 
-### ۲. حالت KV معنایی
-درک فایل‌های `.env` ، `.yaml` و `.ini` بدون توجه به ترتیب کلیدها.
-```bash
-$ qaren kv prod.env staging.env
-── Modified (1 keys) ──
-  ~ PORT: 5000 → 4040
-```
-
 ### ۳. کاهش نویز هوشمند
-در حال مقایسه نسخه‌های پشتیبان JSON در حالت KV هستید؟ از `-D` برای مخفی کردن هشدارهای کلید تکراری و از `-P` برای بی‌صدا کردن هشدارهای دسترسی استفاده کنید. Qaren به طور خودکار تعداد هشدارها را به ۵ عدد برای هر فایل محدود می‌کند.
+در حال مقایسه نسخه‌های پشتیبان JSON در حالت KV هستید؟ Qaren به طور خودکار هشدارهای مربوط به کلیدهای تکراری و دسترسی‌ها را به صورت پیش‌فرض مخفی می‌کند تا خروجی ترمینال شما تمیز بماند. اگر برای عیب‌یابی به این هشدارها نیاز دارید، دستور `qaren config advisor toggle` را برای فعال‌سازی آن‌ها اجرا کنید.
 
 ---
 
 ## <img src="../icons/icons8-installation-48.png" width="24" height="24"> نصب
 
+### نصب سریع (خودکار)
+
+| پلتفرم | دستور |
+| :--- | :--- |
+| **Linux / macOS** | `curl -sSfL https://qaren.me/install | sh` |
+| **Windows** | `irm https://qaren.me/install.ps1 | iex` |
+| **Homebrew** | `brew tap qaren-cli/qaren && brew install qaren` |
+
+### روش‌های جایگزین
 ```bash
-# کلون کردن مخزن
-git clone https://github.com/qaren-cli/qaren.git
-cd qaren
-
-# ساخت نسخه انتشار
-cargo build --release
-
-# فایل اجرایی در مسیر ./target/release/qaren در دسترس خواهد بود
+# از طریق Cargo
+cargo install qaren
 ```
 
 ---
@@ -91,22 +94,19 @@ cargo build --release
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> نحوه استفاده و مثال‌ها
 
 ### مقایسه معنایی (KV)
-```bash
-# مقایسه پایه (تشخیص خودکار = یا :)
-qaren kv file1.env file2.env
+حالت `kv` در Qaren برای کارهای واقعی DevOps طراحی شده است. در اینجا الگوهای رایج برای مقایسه فایل‌های محیطی آورده شده است:
 
-# مقایسه فرمت‌های مختلف (مثلاً .env در مقابل .yaml)
-qaren kv file1.env file2.yaml --d2 ':'
-
-# ایجاد فایل وصله (patch) برای کلیدهای مفقود
-qaren kv prod.env local.env -g patch.env
-
-# نادیده گرفتن کلیدها یا کلمات کلیدی خاص
-qaren kv a.env b.env -x HOSTNAME --ignore-keyword AWS
-
-# خروجی به فرمت JSON قابل خواندن توسط ماشین
-qaren kv a.env b.env --output json
-```
+| کار | دستور | نمایش بصری |
+| :--- | :--- | :--- |
+| **مقایسه معنایی پایه** | `qaren kv -Q --d2 ":" dev.env staging.env` | <img src="../icons/Qd2.gif" width="400"> |
+| **حالت خلاصه** | `qaren kv -Q --d2 ":" dev.env staging.env -s` | <img src="../icons/Qd2s.gif" width="400"> |
+| **خروجی JSON** | `qaren kv -Q --d2 ":" dev.env staging.env -o json` | <img src="../icons/Qd2o.gif" width="400"> |
+| **نمایش اطلاعات حساس** | `qaren kv -Q --d2 ":" dev.env staging.env -S` | <img src="../icons/Qd2S.gif" width="400"> |
+| **نادیده گرفتن کلیدها** | `qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY` | <img src="../icons/Qd2x.gif" width="400"> |
+| **نادیده گرفتن کلمات کلیدی**| `qaren kv --ignore-keyword MAX ...` | <img src="../icons/Qd2-ignore-keyword.gif" width="400"> |
+| **حالت بیصدا** | `qaren kv -Q --d2 ":" dev.env staging.env -q` | <img src="../icons/Qd2q.gif" width="400"> |
+| **تولید فایل وصله**| `qaren kv ... -g missing.env` | <img src="../icons/Qd2g.gif" width="400"> |
+| **وصله‌های امن** | `qaren kv ... -g missing.env --mask-patches` | <img src="../icons/Qd2g-masked.gif" width="400"> |
 
 ### مقایسه حرفی (Diff)
 ```bash
@@ -128,12 +128,22 @@ qaren diff f1.txt f2.txt -w -B
 ## <img src="../icons/icons8-configuration-48.png" width="24" height="24"> تنظیمات
 
 Qaren ترجیحات شما را به خاطر می‌سپارد.
+<p align="center">
+  <img src="../icons/config-color.gif" width="100%" alt="تغییر وضعیت رنگ">
+</p>
+
 ```bash
-# تغییر حالت مناسب برای خط لوله (خروجی همیشه 0)
+# تغییر وضعیت به حالت مناسب برای خط لوله (همیشه خروجی 0)
 qaren config exit toggle
 
-# تغییر وضعیت نمایش رنگ در خروجی
+# تغییر وضعیت نمایش رنگ
 qaren config color toggle
+
+# تغییر وضعیت مشاور (هشدارها)
+qaren config advisor toggle
+
+# تغییر وضعیت مخفی‌سازی اطلاعات حساس
+qaren config masking toggle
 
 # مشاهده تنظیمات فعلی
 qaren config show
@@ -152,7 +162,12 @@ qaren config show
 
 ## <img src="../icons/icons8-contribution-64.png" width="24" height="24"> مشارکت و پشتیبانی
 
-ما **پذیرای مشارکت‌های شما هستیم!** چه رفع باگ باشد، چه پارسر جدید یا بهبود عملکرد، درخواست‌های pull شما خوش‌آمد گفته می‌شود.
+ما **پذیرای مشارکت‌های شما هستیم!** لطفاً قبل از ارسال درخواست Pull، **[راهنمای مشارکت](CONTRIBUTING.md)** را مطالعه کنید.
+
+- [ ] پروژه را **Fork** کنید.
+- [ ] ویژگی‌ها را **بهبود** دهید یا ویژگی جدید **اضافه** کنید (از حذف کدها خودداری کنید).
+- [ ] از **عدم وجود هشدار** اطمینان حاصل کنید (`clippy` و `tests`).
+- [ ] **مستندات** و **--help** را برای فلگ‌های جدید بروزرسانی کنید.
 
 <img src="../icons/icons8-star-.gif" width="20" height="20"> **لطفاً اگر این ابزار برایتان مفید بود، به پروژه ستاره بدهید!**
 

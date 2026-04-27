@@ -10,7 +10,9 @@
   <a href="README.ru.md">Русский</a> | 
   <a href="README.ar.md">العربية</a> | 
   <a href="README.fa.md">فارسی</a> | 
-  <a href="README.ja.md">日本語</a>
+  <a href="README.ja.md">日本語</a> | 
+  <a href="README.de.md">Deutsch</a> | 
+  <a href="README.fr.md">Français</a>
 </p>
 
 <p align="center">
@@ -21,7 +23,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/rust-stable-brightgreen.svg" alt="Rust">
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
-  <img src="https://img.shields.io/badge/version-1.0.0-orange.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.0.1-orange.svg" alt="Version">
   <img src="https://img.shields.io/badge/PRs-welcome-cyan.svg" alt="PRs Welcome">
   <a href="https://github.com/qaren-cli/qaren/actions/workflows/release.yml">
     <img src="https://github.com/qaren-cli/qaren/actions/workflows/release.yml/badge.svg?branch=master" alt="Release">
@@ -52,7 +54,13 @@
 
 ## <img src="../icons/icons8-feature-48.png" width="24" height="24"> الميزات الرئيسية
 
-### 1. مخرجات نصية محسنة
+### 1. نمط KV الدلالي
+يفهم ملفات `.env` و `.yaml` و `.ini` بغض النظر عن ترتيب المفاتيح.
+<p align="center">
+  <img src="../icons/Qd2.gif" width="100%" alt="Semantic KV Mode">
+</p>
+
+### 2. مخرجات نصية محسنة
 يوفر "قارن" مقارنة أسطر أوضح بكثير من POSIX diff، مصممة خصيصاً لتحليل ملفات النسخ الاحتياطي للنظام.
 ```bash
 $ qaren diff backup-old backup-new -w
@@ -60,30 +68,25 @@ $ qaren diff backup-old backup-new -w
 +[L47] TimeoutOverflowWarning: 3000010000 does not fit into a 32-bit integer.
 ```
 
-### 2. نمط KV الدلالي
-يفهم ملفات `.env` و `.yaml` و `.ini` بغض النظر عن ترتيب المفاتيح.
-```bash
-$ qaren kv prod.env staging.env
-── Modified (1 keys) ──
-  ~ PORT: 5000 → 4040
-```
-
 ### 3. تقليل الضجيج الذكي
-هل تقارن نسخ احتياطي JSON في نمط KV؟ استخدم `-D` لإخفاء تحذيرات المفاتيح المتكررة و `-P` لإسكات تنبيهات الأذونات. يقوم "قارن" تلقائياً بتحديد عدد التحذيرات بـ 5 لكل ملف للحفاظ على نظافة الطرفية.
+يقوم "قارن" تلقائياً بإخفاء تحذيرات المفاتيح المتكررة وتنبيهات الأذونات بشكل افتراضي للحفاظ على نظافة الطرفية. إذا كنت بحاجة للمساعدة في استكشاف الأخطاء وإصلاحها، قم بتشغيل `qaren config advisor toggle` لتمكين التنبيهات المفيدة.
 
 ---
 
 ## <img src="../icons/icons8-installation-48.png" width="24" height="24"> التثبيت
 
+### التثبيت السريع (آلي)
+
+| المنصة | الأمر |
+| :--- | :--- |
+| **Linux / macOS** | `curl -sSfL https://qaren.me/install | sh` |
+| **Windows** | `irm https://qaren.me/install.ps1 | iex` |
+| **Homebrew** | `brew tap qaren-cli/qaren && brew install qaren` |
+
+### طرق بديلة
 ```bash
-# استنساخ المستودع
-git clone https://github.com/qaren-cli/qaren.git
-cd qaren
-
-# بناء نسخة الإصدار
-cargo build --release
-
-# سيكون الملف التنفيذي متاحاً في ./target/release/qaren
+# عبر Cargo
+cargo install qaren
 ```
 
 ---
@@ -91,22 +94,19 @@ cargo build --release
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> الاستخدام وأمثلة
 
 ### المقارنة الدلالية (KV)
-```bash
-# مقارنة أساسية (يكتشف التلقائياً = أو :)
-qaren kv file1.env file2.env
+صُمم نمط `kv` في "قارن" لمهام DevOps الواقعية. فيما يلي الأنماط الشائعة المستخدمة لمقارنة ملفات البيئة:
 
-# مقارنة تنسيقات مختلفة (مثلاً .env ضد .yaml)
-qaren kv file1.env file2.yaml --d2 ':'
-
-# إنشاء ملف رقعة (patch) للمفاتيح المفقودة
-qaren kv prod.env local.env -g patch.env
-
-# تجاهل مفاتيح أو كلمات مفتاحية معينة
-qaren kv a.env b.env -x HOSTNAME --ignore-keyword AWS
-
-# مخرجات بتنسيق JSON قابل للقراءة آلياً
-qaren kv a.env b.env --output json
-```
+| المهمة | الأمر | العرض المرئي |
+| :--- | :--- | :--- |
+| **مقارنة دلالية أساسية** | `qaren kv -Q --d2 ":" dev.env staging.env` | <img src="../icons/Qd2.gif" width="400"> |
+| **نمط الملخص** | `qaren kv -Q --d2 ":" dev.env staging.env -s` | <img src="../icons/Qd2s.gif" width="400"> |
+| **تصدير JSON** | `qaren kv -Q --d2 ":" dev.env staging.env -o json` | <img src="../icons/Qd2o.gif" width="400"> |
+| **إظهار الأسرار** | `qaren kv -Q --d2 ":" dev.env staging.env -S` | <img src="../icons/Qd2S.gif" width="400"> |
+| **تجاهل المفاتيح** | `qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY` | <img src="../icons/Qd2x.gif" width="400"> |
+| **تجاهل الكلمات المفتاحية**| `qaren kv --ignore-keyword MAX ...` | <img src="../icons/Qd2-ignore-keyword.gif" width="400"> |
+| **النمط الهادئ** | `qaren kv -Q --d2 ":" dev.env staging.env -q` | <img src="../icons/Qd2q.gif" width="400"> |
+| **إنشاء رقعة (Patch)**| `qaren kv ... -g missing.env` | <img src="../icons/Qd2g.gif" width="400"> |
+| **رقع آمنة** | `qaren kv ... -g missing.env --mask-patches` | <img src="../icons/Qd2g-masked.gif" width="400"> |
 
 ### المقارنة الحرفية (Diff)
 ```bash
@@ -128,12 +128,22 @@ qaren diff f1.txt f2.txt -w -B
 ## <img src="../icons/icons8-configuration-48.png" width="24" height="24"> الإعدادات
 
 يتذكر "قارن" تفضيلاتك.
+<p align="center">
+  <img src="../icons/config-color.gif" width="100%" alt="Config Color Toggle">
+</p>
+
 ```bash
 # تبديل نمط خطوط الأنابيب (الخروج دائماً بـ 0)
 qaren config exit toggle
 
 # تبديل مخرجات الألوان
 qaren config color toggle
+
+# تبديل المستشار (التحذيرات)
+qaren config advisor toggle
+
+# تبديل إخفاء الأسرار
+qaren config masking toggle
 
 # عرض الإعدادات الحالية
 qaren config show
@@ -152,7 +162,12 @@ qaren config show
 
 ## <img src="../icons/icons8-contribution-64.png" width="24" height="24"> المساهمة والدعم
 
-نحن **نرحب بالمساهمات!** سواء كان ذلك إصلاحاً لخطأ، أو محللاً جديداً، أو تحسيناً للأداء، فإن طلبات السحب (PRs) الخاصة بك مرحب بها.
+نحن **نرحب بالمساهمات!** يرجى قراءة **[دليل المساهمة](CONTRIBUTING.md)** قبل تقديم طلب سحب (Pull Request).
+
+- [ ] **Fork** للمستودع.
+- [ ] **تحسين** أو **إضافة** ميزات (تجنب الحذف).
+- [ ] التأكد من **عدم وجود تحذيرات** (`clippy` و `tests`).
+- [ ] تحديث **التوثيق** و **--help** للأعلام (flags) الجديدة.
 
 <img src="../icons/icons8-star-.gif" width="20" height="20"> **يرجى إعطاء نجمة للمشروع إذا وجدته مفيداً!**
 

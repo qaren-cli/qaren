@@ -1,0 +1,23 @@
+<svg width="600" height="250" xmlns="http://www.w3.org/2000/svg">
+  <!-- Terminal Window Background -->
+  <rect width="600" height="250" rx="10" ry="10" fill="#1e1e1e" />
+  
+  <!-- Title Bar -->
+  <path d="M 0 10 A 10 10 0 0 1 10 0 L 590 0 A 10 10 0 0 1 600 10 L 600 35 L 0 35 Z" fill="#333333" />
+  
+  <!-- Window Controls -->
+  <circle cx="20" cy="17" r="6" fill="#ff5f56" />
+  <circle cx="42" cy="17" r="6" fill="#ffbd2e" />
+  <circle cx="64" cy="17" r="6" fill="#27c93f" />
+  
+  <!-- File Name -->
+  <text x="300" y="22" font-family="monospace" font-size="14" fill="#bbbbbb" text-anchor="middle">dev.env</text>
+  
+  <!-- Content -->
+  <text x="25" y="75" font-family="monospace" font-size="16" fill="#d4d4d4">
+    <tspan x="25" dy="0">EMAIL_MAX_RETRY_ATTEMPTS=3</tspan>
+    <tspan x="25" dy="25">S3_MAX_RETRY_ATTEMPTS=15</tspan>
+    <tspan x="25" dy="25">RATE_LIMIT_WINDOW_MS="900000"</tspan>
+    <tspan x="25" dy="25">QAREN_API_KEY=API_TEST_01252</tspan>
+  </text>
+</svg>

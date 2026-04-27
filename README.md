@@ -54,20 +54,18 @@ For detailed guides, API reference, and advanced configuration, visit our docume
 
 ## <img src="icons/icons8-feature-48.png" width="24" height="24"> Key Features
 
-### 1. Enhanced Literal Output
+### 1. Semantic KV mode
+Understand `.env`, `.yaml`, and `.ini` files regardless of key order.
+<p align="center">
+  <img src="icons/Qd2.gif" width="100%" alt="Semantic KV Mode">
+</p>
+
+### 2. Enhanced Literal Output
 Qaren provides much clearer line-by-line diffs than POSIX diff, specifically optimized for system backup analysis.
 ```bash
 $ qaren diff backup-old.txt backup-new.txt -w
 -[L47] TimeoutOverflowWarning: does not fit into a 32-bit integer.
 +[L47] TimeoutOverflowWarning: 3000010000 does not fit into a 32-bit integer.
-```
-
-### 2. Semantic KV mode
-Understand `.env`, `.yaml`, and `.ini` files regardless of key order.
-```bash
-$ qaren kv prod.env staging.env
-── Modified (1 keys) ──
-  ~ PORT: 5000 → 4040
 ```
 
 ### 3. Smart Noise Reduction
@@ -96,22 +94,19 @@ cargo install qaren
 ## <img src="icons/icons8-rust-48.png" width="24" height="24"> Usage & Examples
 
 ### Semantic Comparison (KV)
-```bash
-# Basic comparison (auto-detects = or :)
-qaren kv file1.env file2.env
+Qaren's `kv` mode is designed for real-world DevOps tasks. Below are common patterns used to compare environment files:
 
-# Compare different formats (e.g. .env vs .yaml)
-qaren kv file1.env file2.yaml --d2 ':'
-
-# Generate a patch file for missing keys
-qaren kv prod.env local.env -g patch.env
-
-# Ignore specific keys or keywords
-qaren kv a.env b.env -x HOSTNAME --ignore-keyword AWS
-
-# Output as machine-readable JSON
-qaren kv a.env b.env --output json
-```
+| Task | Command | Visual |
+| :--- | :--- | :--- |
+| **Basic Semantic Diff** | `qaren kv -Q --d2 ":" dev.env staging.env` | <img src="icons/Qd2.gif" width="400"> |
+| **Summary Mode** | `qaren kv -Q --d2 ":" dev.env staging.env -s` | <img src="icons/Qd2s.gif" width="400"> |
+| **JSON Export** | `qaren kv -Q --d2 ":" dev.env staging.env -o json` | <img src="icons/Qd2o.gif" width="400"> |
+| **Show Secrets** | `qaren kv -Q --d2 ":" dev.env staging.env -S` | <img src="icons/Qd2S.gif" width="400"> |
+| **Ignore Keys** | `qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY` | <img src="icons/Qd2x.gif" width="400"> |
+| **Ignore Keywords**| `qaren kv --ignore-keyword MAX ...` | <img src="icons/Qd2-ignore-keyword.gif" width="400"> |
+| **Quiet Mode** | `qaren kv -Q --d2 ":" dev.env staging.env -q` | <img src="icons/Qd2q.gif" width="400"> |
+| **Patch Generation**| `qaren kv ... -g missing.env` | <img src="icons/Qd2g.gif" width="400"> |
+| **Secure Patches** | `qaren kv ... -g missing.env --mask-patches` | <img src="icons/Qd2g-masked.gif" width="400"> |
 
 ### Literal Comparison (Diff)
 ```bash
@@ -133,6 +128,10 @@ qaren diff f1.txt f2.txt -w -B
 ## <img src="icons/icons8-configuration-48.png" width="24" height="24"> Configuration
 
 Qaren remembers your preferences.
+<p align="center">
+  <img src="icons/config-color.gif" width="100%" alt="Config Color Toggle">
+</p>
+
 ```bash
 # Toggle pipeline-friendly mode (always exit 0)
 qaren config exit toggle

@@ -10,7 +10,9 @@
   <a href="README.ru.md">Русский</a> | 
   <a href="README.ar.md">العربية</a> | 
   <a href="README.fa.md">فارسی</a> | 
-  <a href="README.ja.md">日本語</a>
+  <a href="README.ja.md">日本語</a> | 
+  <a href="README.de.md">Deutsch</a> | 
+  <a href="README.fr.md">Français</a>
 </p>
 
 <p align="center">
@@ -21,7 +23,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/rust-stable-brightgreen.svg" alt="Rust">
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
-  <img src="https://img.shields.io/badge/version-1.0.0-orange.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.0.1-orange.svg" alt="Version">
   <img src="https://img.shields.io/badge/PRs-welcome-cyan.svg" alt="PRs Welcome">
   <a href="https://github.com/qaren-cli/qaren/actions/workflows/release.yml">
     <img src="https://github.com/qaren-cli/qaren/actions/workflows/release.yml/badge.svg?branch=master" alt="Release">
@@ -52,7 +54,13 @@ Qaren (с арабского **«Сравнивать»**) — это много
 
 ## <img src="../icons/icons8-feature-48.png" width="24" height="24"> Ключевые особенности
 
-### 1. Улучшенный вывод
+### 1. Семантический режим KV
+Понимает файлы `.env`, `.yaml` и `.ini` независимо от порядка ключей.
+<p align="center">
+  <img src="../icons/Qd2.gif" width="100%" alt="Семантический режим KV">
+</p>
+
+### 2. Улучшенный вывод
 Qaren предоставляет гораздо более четкие построчные различия, чем POSIX diff, специально оптимизированные для анализа файлов бэкапов.
 ```bash
 $ qaren diff backup-old backup-new -w
@@ -60,30 +68,25 @@ $ qaren diff backup-old backup-new -w
 +[L47] TimeoutOverflowWarning: 3000010000 does not fit into a 32-bit integer.
 ```
 
-### 2. Семантический режим KV
-Понимает файлы `.env`, `.yaml` и `.ini` независимо от порядка ключей.
-```bash
-$ qaren kv prod.env staging.env
-── Modified (1 keys) ──
-  ~ PORT: 5000 → 4040
-```
-
 ### 3. Умное шумоподавление
-Сравниваете бэкапы JSON в режиме KV? Используйте `-D`, чтобы скрыть предупреждения о дубликатах ключей, и `-P`, чтобы отключить уведомления о правах доступа. Qaren автоматически ограничивает количество предупреждений до 5 на файл.
+Сравниваете бэкапы JSON в режиме KV? Qaren автоматически скрывает предупреждения о дубликатах ключей и правах доступа по умолчанию. Если вам нужна помощь в отладке, запустите `qaren config advisor toggle`, чтобы включить полезные оповещения.
 
 ---
 
 ## <img src="../icons/icons8-installation-48.png" width="24" height="24"> Установка
 
+### Быстрая установка (автоматически)
+
+| Платформа | Команда |
+| :--- | :--- |
+| **Linux / macOS** | `curl -sSfL https://qaren.me/install | sh` |
+| **Windows** | `irm https://qaren.me/install.ps1 | iex` |
+| **Homebrew** | `brew tap qaren-cli/qaren && brew install qaren` |
+
+### Альтернативные методы
 ```bash
-# Клонировать репозиторий
-git clone https://github.com/qaren-cli/qaren.git
-cd qaren
-
-# Собрать релизную версию
-cargo build --release
-
-# Бинарный файл будет доступен в ./target/release/qaren
+# Через Cargo
+cargo install qaren
 ```
 
 ---
@@ -91,22 +94,19 @@ cargo build --release
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> Использование и примеры
 
 ### Семантическое сравнение (KV)
-```bash
-# Базовое сравнение (автоопределение = или :)
-qaren kv file1.env file2.env
+Режим `kv` в Qaren разработан для реальных задач DevOps. Ниже приведены распространенные шаблоны для сравнения файлов окружения:
 
-# Сравнение разных форматов (например, .env и .yaml)
-qaren kv file1.env file2.yaml --d2 ':'
-
-# Создать файл патча для отсутствующих ключей
-qaren kv prod.env local.env -g patch.env
-
-# Игнорировать определенные ключи или ключевые слова
-qaren kv a.env b.env -x HOSTNAME --ignore-keyword AWS
-
-# Вывод в формате JSON
-qaren kv a.env b.env --output json
-```
+| Задача | Команда | Визуализация |
+| :--- | :--- | :--- |
+| **Базовый семантический diff** | `qaren kv -Q --d2 ":" dev.env staging.env` | <img src="../icons/Qd2.gif" width="400"> |
+| **Режим сводки** | `qaren kv -Q --d2 ":" dev.env staging.env -s` | <img src="../icons/Qd2s.gif" width="400"> |
+| **Экспорт в JSON** | `qaren kv -Q --d2 ":" dev.env staging.env -o json` | <img src="../icons/Qd2o.gif" width="400"> |
+| **Показать секреты** | `qaren kv -Q --d2 ":" dev.env staging.env -S` | <img src="../icons/Qd2S.gif" width="400"> |
+| **Игнорировать ключи** | `qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY` | <img src="../icons/Qd2x.gif" width="400"> |
+| **Игнорировать ключевые слова**| `qaren kv --ignore-keyword MAX ...` | <img src="../icons/Qd2-ignore-keyword.gif" width="400"> |
+| **Тихий режим** | `qaren kv -Q --d2 ":" dev.env staging.env -q` | <img src="../icons/Qd2q.gif" width="400"> |
+| **Генерация патча**| `qaren kv ... -g missing.env` | <img src="../icons/Qd2g.gif" width="400"> |
+| **Безопасные патчи** | `qaren kv ... -g missing.env --mask-patches` | <img src="../icons/Qd2g-masked.gif" width="400"> |
 
 ### Литеральное сравнение (Diff)
 ```bash
@@ -128,12 +128,22 @@ qaren diff f1.txt f2.txt -w -B
 ## <img src="../icons/icons8-configuration-48.png" width="24" height="24"> Конфигурация
 
 Qaren запоминает ваши предпочтения.
+<p align="center">
+  <img src="../icons/config-color.gif" width="100%" alt="Переключение цвета">
+</p>
+
 ```bash
 # Переключить режим для пайплайнов (всегда выход 0)
 qaren config exit toggle
 
 # Переключить цветной вывод
 qaren config color toggle
+
+# Переключить Advisor (предупреждения)
+qaren config advisor toggle
+
+# Переключить маскировку секретов
+qaren config masking toggle
 
 # Показать текущие настройки
 qaren config show
@@ -152,7 +162,12 @@ qaren config show
 
 ## <img src="../icons/icons8-contribution-64.png" width="24" height="24"> Участие и поддержка
 
-Мы **открыты для контрибьюта!** Будь то исправление багов, новые парсеры или оптимизация производительности — ваши PR приветствуются.
+Мы **открыты для контрибьюта!** Пожалуйста, прочтите наше **[руководство по участию](CONTRIBUTING.md)** перед отправкой Pull Request.
+
+- [ ] **Форкните** репозиторий.
+- [ ] **Улучшите** или **добавьте** функции (избегайте удалений).
+- [ ] Убедитесь в **отсутствии ворнингов** (`clippy` и `tests`).
+- [ ] Обновите **документацию** и **--help** для новых флагов.
 
 <img src="../icons/icons8-star-.gif" width="20" height="20"> **Пожалуйста, поставьте звезду проекту, если он вам полезен!**
 
