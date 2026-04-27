@@ -1,6 +1,6 @@
 # Qaren Technical Documentation
 
-[![Release](https://github.com/qaren-cli/qaren/actions/workflows/release.yml/badge.svg)](https://github.com/qaren-cli/qaren/actions/workflows/release.yml)
+[![Release](https://github.com/qaren-cli/qaren/actions/workflows/release.yml/badge.svg?branch=master)](https://github.com/qaren-cli/qaren/actions/workflows/release.yml)
 
 Welcome to the official documentation for **Qaren**, a blazingly fast, multi-paradigm configuration comparison tool built specifically for DevOps engineers, system administrators, and security-conscious developers.
 
