@@ -23,7 +23,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/rust-stable-brightgreen.svg" alt="Rust">
   <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
-  <img src="https://img.shields.io/badge/version-1.0.0-orange.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.0.1-orange.svg" alt="Version">
   <img src="https://img.shields.io/badge/PRs-welcome-cyan.svg" alt="PRs Welcome">
   <a href="https://github.com/qaren-cli/qaren/actions/workflows/release.yml">
     <img src="https://github.com/qaren-cli/qaren/actions/workflows/release.yml/badge.svg?branch=master" alt="Release">
@@ -71,7 +71,7 @@ $ qaren kv prod.env staging.env
 ```
 
 ### 3. Smart Noise Reduction
-Comparing JSON-based backups in KV mode? Use `-D` to suppress duplicate key warnings and `-P` to silence permission alerts. Qaren automatically caps warnings at 5 per file to keep your terminal clean.
+Comparing JSON-based backups in KV mode? Qaren automatically suppresses duplicate key and permission warnings by default to keep your terminal clean. If you need assistance debugging, run `qaren config advisor toggle` to enable helpful alerts.
 
 ---
 
@@ -139,6 +139,12 @@ qaren config exit toggle
 
 # Toggle color output
 qaren config color toggle
+
+# Toggle advisor (warnings)
+qaren config advisor toggle
+
+# Toggle secret masking
+qaren config masking toggle
 
 # View current settings
 qaren config show

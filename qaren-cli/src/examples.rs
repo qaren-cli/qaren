@@ -80,6 +80,12 @@ pub fn print_examples(subcmd: Option<&str>) {
             println!("    {} {} exit toggle", "$".bright_black(), "qaren config".green());
             println!("    {}\n", "Toggle pipeline-friendly exit code behavior.".bright_black());
 
+            println!("    {} {} advisor toggle", "$".bright_black(), "qaren config".green());
+            println!("    {}\n", "Toggle helpful warnings (duplicates, permissions) on/off.".bright_black());
+
+            println!("    {} {} masking toggle", "$".bright_black(), "qaren config".green());
+            println!("    {}\n", "Toggle automatic secret masking on/off.".bright_black());
+
             println!("    {} {}", "$".bright_black(), "qaren --generate-completions bash > ~/.local/share/bash-completion/completions/qaren".green());
             println!("    {}\n", "Generate shell autocompletion script (supports bash, zsh, fish, powershell, elvish).".bright_black());
 

@@ -24,6 +24,8 @@ Config file: /home/user/.config/qaren/config
 
   exit nonzero-on-diff : enabled  (exit 1 when differences found)
   color output         : enabled
+  advisor (warnings)   : disabled (warnings hidden)
+  secret masking       : enabled
 ```
 
 ### `exit`
@@ -50,6 +52,28 @@ qaren config exit toggle
 **Command Example (Toggle):**
 ```bash
 qaren config color toggle
+```
+
+### `advisor`
+**Use Case:** Control whether Qaren shows helpful warnings (e.g., duplicate keys in a file, insecure file permissions). By default, these warnings are **disabled** to keep output clean. Enable this if you need assistance debugging your configuration files.
+**Actions:**
+- `show`: View current advisor settings.
+- `toggle`: Enable or disable helpful warnings.
+
+**Command Example (Toggle):**
+```bash
+qaren config advisor toggle
+```
+
+### `masking`
+**Use Case:** Globally enable or disable automatic secret masking. When enabled (default), Qaren redacts sensitive keys (like `API_KEY`, `PASSWORD`) in the output. Use this toggle if you frequently need to see raw secret values without passing the `-S` flag.
+**Actions:**
+- `show`: View current masking settings.
+- `toggle`: Enable or disable automatic masking.
+
+**Command Example (Toggle):**
+```bash
+qaren config masking toggle
 ```
 
 ### `path`

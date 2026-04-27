@@ -229,7 +229,7 @@ pub enum Commands {
     ///   Linux/macOS : $XDG_CONFIG_HOME/qaren/config  (~/.config/qaren/config)
     ///   Windows     : %APPDATA%\qaren\config
     Config {
-        /// Setting to configure: 'exit', 'color', 'show', or 'path'
+        /// Setting to configure: 'exit', 'color', 'advisor', 'masking', 'show', or 'path'
         #[arg(default_value = "show")]
         what: String,
 

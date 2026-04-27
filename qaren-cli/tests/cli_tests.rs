@@ -522,10 +522,28 @@ fn test_config_color_show() {
         .stdout(predicate::str::contains("color output"));
 }
 
+#[test]
+fn test_config_advisor_show() {
+    qaren_cmd()
+        .args(["config", "advisor", "show"])
+        .assert()
+        .code(0)
+        .stdout(predicate::str::contains("advisor (warnings)"));
+}
+
+#[test]
+fn test_config_masking_show() {
+    qaren_cmd()
+        .args(["config", "masking", "show"])
+        .assert()
+        .code(0)
+        .stdout(predicate::str::contains("secret masking"));
+}
+
 // --- Task 7 Regression Tests --------------------------------------
 
 #[test]
-fn test_duplicate_key_warning_printed() {
+fn test_duplicate_key_warning_hidden_by_default() {
     let tmp = TempDir::new().unwrap();
     let f1 = create_temp_file(&tmp, "a.env", "DEBUG_MODE=false\nPORT=8080\nDEBUG_MODE=true\n");
     let f2 = create_temp_file(&tmp, "b.env", "DEBUG_MODE=false\nPORT=8080\nDEBUG_MODE=true\n");
@@ -534,7 +552,7 @@ fn test_duplicate_key_warning_printed() {
         .args(["kv", &f1.display().to_string(), &f2.display().to_string()])
         .assert()
         .code(0)
-        .stderr(predicate::str::contains("Warning").and(predicate::str::contains("duplicate key 'DEBUG_MODE'")));
+        .stderr(predicate::str::is_empty());
 }
 
 #[test]

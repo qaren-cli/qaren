@@ -18,6 +18,11 @@ pub struct QarenConfig {
     pub exit_nonzero_on_diff: bool,
     /// When `true` (default), output uses ANSI colour codes.
     pub color: bool,
+    /// When `true`, show "Advisor" warnings (e.g. duplicates, permissions).
+    /// Default is `false` (stop warnings by default).
+    pub advisor: bool,
+    /// When `true` (default), mask sensitive data in output.
+    pub masking: bool,
 }
 
 impl Default for QarenConfig {
@@ -25,6 +30,8 @@ impl Default for QarenConfig {
         Self {
             exit_nonzero_on_diff: true, // POSIX default
             color: true,
+            advisor: false, // Disabled by default as requested
+            masking: true,  // Enabled by default
         }
     }
 }
@@ -78,6 +85,12 @@ pub fn load_config() -> QarenConfig {
                 "color" => {
                     cfg.color = value.trim() != "false";
                 }
+                "advisor" => {
+                    cfg.advisor = value.trim() == "true";
+                }
+                "masking" => {
+                    cfg.masking = value.trim() != "false";
+                }
                 _ => {} // Unknown keys are silently ignored (forward-compatible)
             }
         }
@@ -107,6 +120,12 @@ fn save_config(cfg: &QarenConfig) -> Result<(), io::Error> {
     writeln!(file)?;
     writeln!(file, "# color: false = disable ANSI color output")?;
     writeln!(file, "color={}", cfg.color)?;
+    writeln!(file)?;
+    writeln!(file, "# advisor: true = show helpful warnings (duplicates, permissions)")?;
+    writeln!(file, "advisor={}", cfg.advisor)?;
+    writeln!(file)?;
+    writeln!(file, "# masking: false = disable automatic secret masking")?;
+    writeln!(file, "masking={}", cfg.masking)?;
     Ok(())
 }
 
@@ -128,6 +147,12 @@ pub fn cmd_config_show(cfg: &QarenConfig) {
 
     let color_status = if cfg.color { "enabled" } else { "disabled" };
     println!("  color output         : {}", color_status);
+
+    let advisor_status = if cfg.advisor { "enabled" } else { "disabled (warnings hidden)" };
+    println!("  advisor (warnings)   : {}", advisor_status);
+
+    let masking_status = if cfg.masking { "enabled" } else { "disabled" };
+    println!("  secret masking       : {}", masking_status);
 }
 
 /// Toggle the exit-on-diff behaviour and save.
@@ -153,6 +178,30 @@ pub fn cmd_color_toggle(cfg: &mut QarenConfig) {
         Ok(_) => {
             let state = if cfg.color { "enabled" } else { "disabled" };
             println!("✔ color output: {}", state);
+        }
+        Err(e) => eprintln!("Error saving config: {}", e),
+    }
+}
+
+/// Toggle the advisor (warnings) and save.
+pub fn cmd_advisor_toggle(cfg: &mut QarenConfig) {
+    cfg.advisor = !cfg.advisor;
+    match save_config(cfg) {
+        Ok(_) => {
+            let state = if cfg.advisor { "enabled" } else { "disabled" };
+            println!("✔ advisor (warnings): {}", state);
+        }
+        Err(e) => eprintln!("Error saving config: {}", e),
+    }
+}
+
+/// Toggle the masking and save.
+pub fn cmd_masking_toggle(cfg: &mut QarenConfig) {
+    cfg.masking = !cfg.masking;
+    match save_config(cfg) {
+        Ok(_) => {
+            let state = if cfg.masking { "enabled" } else { "disabled" };
+            println!("✔ secret masking: {}", state);
         }
         Err(e) => eprintln!("Error saving config: {}", e),
     }
@@ -184,11 +233,21 @@ pub fn handle_config_command(what: &str, action: &str) {
             println!("color output: {}", state);
         }
         ("color", "toggle") => cmd_color_toggle(&mut cfg),
+        ("advisor", "show") => {
+            let state = if cfg.advisor { "enabled" } else { "disabled" };
+            println!("advisor (warnings): {}", state);
+        }
+        ("advisor", "toggle") => cmd_advisor_toggle(&mut cfg),
+        ("masking", "show") => {
+            let state = if cfg.masking { "enabled" } else { "disabled" };
+            println!("secret masking: {}", state);
+        }
+        ("masking", "toggle") => cmd_masking_toggle(&mut cfg),
         ("show", _) | ("", "") => cmd_config_show(&cfg),
         ("path", _) => cmd_config_path(),
         _ => {
             eprintln!("Unknown config command: {} {}", what, action);
-            eprintln!("Usage: qaren config <exit|color> <show|toggle>");
+            eprintln!("Usage: qaren config <exit|color|advisor|masking> <show|toggle>");
             eprintln!("       qaren config show");
         }
     }

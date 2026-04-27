@@ -105,7 +105,7 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
                     std::process::exit(2);
                 }
             };
-            let identical = handle_diff_command(&f1, &f2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, recursive, files_only, brief, quiet, report_identical_files, &shared)?;
+            let identical = handle_diff_command(&f1, &f2, unified, ignore_space_change, ignore_trailing_space, ignore_blank_lines, recursive, files_only, brief, quiet, report_identical_files, &shared, &cfg)?;
             Ok((identical, cfg))
         }
         Some(Commands::Kv {
@@ -125,7 +125,7 @@ fn run() -> Result<(bool, config::QarenConfig), QarenError> {
             let identical = handle_kv_command(
                 &f1, &f2, delimiter.as_deref(), d1.as_deref(), d2.as_deref(), strip_quotes, recursive, &output,
                 ignore_keys, ignore_keywords, quiet, summary, show_secrets, verbose, missing_only,
-                generate_patch.as_deref(), mask_patches, &direction, &shared,
+                generate_patch.as_deref(), mask_patches, &direction, &shared, &cfg,
             )?;
             Ok((identical, cfg))
         }
@@ -163,6 +163,7 @@ fn handle_diff_command(
     quiet: bool,
     report_identical_files: bool,
     shared: &crate::commands::SharedDiffOptions,
+    cfg: &config::QarenConfig,
 ) -> Result<bool, QarenError> {
     if recursive {
         let mut files1 = HashSet::new();
@@ -275,10 +276,15 @@ fn handle_diff_command(
         
         for w in warnings {
             let is_perm_warn = w.contains("permissions");
-            if is_perm_warn && shared.no_perm_warn {
-                continue;
+            let should_show = if is_perm_warn {
+                !shared.no_perm_warn && cfg.advisor
+            } else {
+                cfg.advisor
+            };
+
+            if should_show {
+                eprintln!("Warning: {}", w);
             }
-            eprintln!("Warning: {}", w);
         }
 
         return Ok(all_identical);
@@ -471,6 +477,7 @@ fn handle_kv_command(
     mask_patches: bool,
     direction: &str,
     shared: &crate::commands::SharedDiffOptions,
+    cfg: &config::QarenConfig,
 ) -> Result<bool, QarenError> {
     // Validate --direction without --generate-missing
     if generate_patch.is_none() && direction != "source-to-target" {
@@ -498,6 +505,8 @@ fn handle_kv_command(
         ignore_keywords: ignore_keywords.clone(),
         strip_ansi: shared.strip_ansi,
     };
+
+    let effective_show_secrets = show_secrets || !cfg.masking;
 
     if recursive {
         let dir_opts1 = DirParseOptions {
@@ -544,8 +553,10 @@ fn handle_kv_command(
         } else if !quiet {
             use colored::Colorize;
             
-            for warning in &dir_diff.traversal_warnings {
-                eprintln!("{}: {}", "⚠ Warning".yellow().bold(), warning);
+            if cfg.advisor {
+                for warning in &dir_diff.traversal_warnings {
+                    eprintln!("{}: {}", "⚠ Warning".yellow().bold(), warning);
+                }
             }
 
             if summary {
@@ -587,7 +598,7 @@ fn handle_kv_command(
                             let label1 = format!("{}/{}", file1.display(), path.display());
                             let label2 = format!("{}/{}", file2.display(), path.display());
                             println!("\n▶ Modified File: {}", path.display());
-                            output::print_diff_result(diff, show_secrets, verbose, &label1, &label2);
+                            output::print_diff_result(diff, effective_show_secrets, verbose, &label1, &label2);
                         }
                         FileDiffStatus::OrphanInSource(_) => {
                             println!("▶ Orphan: {} (exists only in {})", path.display().to_string().red(), file1.display());
@@ -655,19 +666,7 @@ fn handle_kv_command(
         println!("[INFO] Parsing file2: {} (Found {} keys)", file2.display(), config2.pairs.len());
     }
 
-    // Build diff options
-    let diff_opts = DiffOptions {
-        ignore_case: shared.ignore_case,
-        ignore_all_space: shared.ignore_all_space,
-        ignore_space_change: false,
-        ignore_trailing_space: false,
-        ignore_blank_lines: false,
-        ignore_keys,
-        ignore_keywords,
-        strip_ansi: shared.strip_ansi,
-    };
-
-    if !quiet {
+    if !quiet && cfg.advisor {
         use colored::Colorize;
         if summary {
             let warn_count1 = config1.warnings.iter().filter(|w| w.key.is_some() && w.key.as_ref().is_none_or(|k| !diff_opts.is_ignored(k))).count();
@@ -755,7 +754,7 @@ fn handle_kv_command(
     if quiet {
         // Absolute silence for exit-code checking
     } else if output_format == "json" {
-        output::print_json_diff(&diff_result, show_secrets);
+        output::print_json_diff(&diff_result, effective_show_secrets);
     } else {
         use colored::Colorize;
         if identical {
@@ -775,7 +774,7 @@ fn handle_kv_command(
                 );
                 println!();
             } else {
-                output::print_diff_result(&diff_result, show_secrets, verbose, label1, label2);
+                output::print_diff_result(&diff_result, effective_show_secrets, verbose, label1, label2);
             }
         }
 
