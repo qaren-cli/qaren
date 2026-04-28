@@ -473,8 +473,10 @@ mod tests {
         let file1 = make_config(&[("KEY1", "v1"), ("KEY2", "v2"), ("KEY3", "v3")]);
         let file2 = make_config(&[("KEY1", "v1_mod"), ("KEY3", "v3"), ("KEY4", "v4")]);
         
-        let mut opts = DiffOptions::default();
-        opts.ignore_keys = vec!["KEY1".to_string(), "KEY2".to_string(), "KEY4".to_string()];
+        let opts = DiffOptions {
+            ignore_keys: vec!["KEY1".to_string(), "KEY2".to_string(), "KEY4".to_string()],
+            ..Default::default()
+        };
         
         let result = semantic_diff(&file1, &file2, &opts);
         
@@ -495,8 +497,10 @@ mod tests {
         let file1 = make_config(&[("GITHUB_TOKEN", "123"), ("HOST", "localhost")]);
         let file2 = make_config(&[("github_url", "http"), ("HOST", "127.0.0.1")]);
         
-        let mut opts = DiffOptions::default();
-        opts.ignore_keywords = vec!["github".to_string()];
+        let opts = DiffOptions {
+            ignore_keywords: vec!["github".to_string()],
+            ..Default::default()
+        };
         
         let result = semantic_diff(&file1, &file2, &opts);
         

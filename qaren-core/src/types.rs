@@ -297,7 +297,7 @@ mod tests {
     fn test_patch_direction_from_str_invalid() {
         let result = "invalid".parse::<PatchDirection>();
         assert!(result.is_err());
-        assert!(result.err().map_or(false, |e| e.contains("Invalid direction")));
+        assert!(result.err().is_some_and(|e| e.contains("Invalid direction")));
     }
 }
 

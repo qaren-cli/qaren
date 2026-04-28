@@ -131,7 +131,7 @@ mod tests {
 
     #[test]
     fn test_from_io_with_path_other() {
-        let io_err = io::Error::new(io::ErrorKind::Other, "something else");
+        let io_err = io::Error::other("something else");
         let err = QarenError::from_io_with_path(io_err, PathBuf::from("test.env"));
         assert!(matches!(err, QarenError::FileRead { .. }));
     }
