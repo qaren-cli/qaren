@@ -32,7 +32,7 @@
 
 ---
 
-## چرا Qaren؟ <img src="../icons/favicon.png" width="24" height="24"> &nbsp; [<img src="../icons/icons8-linkedin-48.png" width="24" height="24">](https://www.linkedin.com/in/alielesawy) &nbsp; [<img src="../icons/icons8-github-48.png" width="24" height="24">](https://github.com/alielesawy)
+## چرا Qaren؟ [<img src="../icons/favicon.png" width="24" height="24">](https://qaren.me) &nbsp; [<img src="../icons/icons8-linkedin-48.png" width="24" height="24">](https://www.linkedin.com/in/alielesawy) &nbsp; [<img src="../icons/icons8-github-48.png" width="24" height="24">](https://github.com/alielesawy)
 
 ابزار استاندارد POSIX `diff` به مدت ۵۰ سال به ما خدمت کرده است، اما برای کد منبع طراحی شده بود، نه برای فایل‌های تنظیمات پیچیده و نسخه‌های پشتیبان سیستم حجیم امروزی که ترتیب در آن‌ها اهمیتی ندارد.
 
@@ -62,11 +62,16 @@
 
 ### ۲. خروجی متنی بهبود یافته
 Qaren مقایسه خط به خط بسیار واضح‌تری نسبت به POSIX diff ارائه می‌دهد که مخصوصاً برای تحلیل فایل‌های نسخه پشتیبان سیستم بهینه شده است.
-```bash
-$ qaren diff backup-old backup-new -w
--[L47] TimeoutOverflowWarning: does not fit into a 32-bit integer.
-+[L47] TimeoutOverflowWarning: 3000010000 does not fit into a 32-bit integer.
-```
+
+<p align="center">
+  <b>ابزار Diff سنتی (POSIX)</b><br>
+  <img src="../icons/diff.gif" width="100%" alt="Traditional POSIX Diff">
+</p>
+
+<p align="center">
+  <b>مقایسه بهبود یافته Qaren</b><br>
+  <img src="../icons/qaren-diff.gif" width="100%" alt="Qaren Enhanced Diff">
+</p>
 
 ### ۳. کاهش نویز هوشمند
 در حال مقایسه نسخه‌های پشتیبان JSON در حالت KV هستید؟ Qaren به طور خودکار هشدارهای مربوط به کلیدهای تکراری و دسترسی‌ها را به صورت پیش‌فرض مخفی می‌کند تا خروجی ترمینال شما تمیز بماند. اگر برای عیب‌یابی به این هشدارها نیاز دارید، دستور `qaren config advisor toggle` را برای فعال‌سازی آن‌ها اجرا کنید.

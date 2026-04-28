@@ -32,7 +32,7 @@
 
 ---
 
-## Why Qaren? <img src="icons/favicon.png" width="24" height="24"> &nbsp; [<img src="icons/icons8-linkedin-48.png" width="24" height="24">](https://www.linkedin.com/in/alielesawy) &nbsp; [<img src="icons/icons8-github-48.png" width="24" height="24">](https://github.com/alielesawy)
+## Why Qaren? [<img src="icons/favicon.png" width="24" height="24">](https://qaren.me) &nbsp; [<img src="icons/icons8-linkedin-48.png" width="24" height="24">](https://www.linkedin.com/in/alielesawy) &nbsp; [<img src="icons/icons8-github-48.png" width="24" height="24">](https://github.com/alielesawy)
 
 Standard POSIX `diff` has served us for 50 years, but it was designed for source code, not for the complex, order-agnostic configuration files and massive system backups of today.
 
@@ -62,11 +62,16 @@ Understand `.env`, `.yaml`, and `.ini` files regardless of key order.
 
 ### 2. Enhanced Literal Output
 Qaren provides much clearer line-by-line diffs than POSIX diff, specifically optimized for system backup analysis.
-```bash
-$ qaren diff backup-old.txt backup-new.txt -w
--[L47] TimeoutOverflowWarning: does not fit into a 32-bit integer.
-+[L47] TimeoutOverflowWarning: 3000010000 does not fit into a 32-bit integer.
-```
+
+<p align="center">
+  <b>Traditional POSIX Diff</b><br>
+  <img src="icons/diff.gif" width="100%" alt="Traditional POSIX Diff">
+</p>
+
+<p align="center">
+  <b>Qaren Enhanced Diff</b><br>
+  <img src="icons/qaren-diff.gif" width="100%" alt="Qaren Enhanced Diff">
+</p>
 
 ### 3. Smart Noise Reduction
 Comparing JSON-based backups in KV mode? Qaren automatically suppresses duplicate key and permission warnings by default to keep your terminal clean. If you need assistance debugging, run `qaren config advisor toggle` to enable helpful alerts.

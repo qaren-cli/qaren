@@ -32,7 +32,7 @@
 
 ---
 
-## لماذا قارن؟ <img src="../icons/favicon.png" width="24" height="24"> &nbsp; [<img src="../icons/icons8-linkedin-48.png" width="24" height="24">](https://www.linkedin.com/in/alielesawy) &nbsp; [<img src="../icons/icons8-github-48.png" width="24" height="24">](https://github.com/alielesawy)
+## لماذا قارن؟ [<img src="../icons/favicon.png" width="24" height="24">](https://qaren.me) &nbsp; [<img src="../icons/icons8-linkedin-48.png" width="24" height="24">](https://www.linkedin.com/in/alielesawy) &nbsp; [<img src="../icons/icons8-github-48.png" width="24" height="24">](https://github.com/alielesawy)
 
 أداة `diff` القياسية خدمت المهندسين لـ 50 عاماً، لكنها صُممت للشفرة المصدرية (Source Code)، وليس لملفات الإعدادات المعقدة والنسخ الاحتياطي الضخم للنظام الذي لا يعتمد على ترتيب الأسطر كما هو الحال اليوم.
 
@@ -62,11 +62,16 @@
 
 ### 2. مخرجات نصية محسنة
 يوفر "قارن" مقارنة أسطر أوضح بكثير من POSIX diff، مصممة خصيصاً لتحليل ملفات النسخ الاحتياطي للنظام.
-```bash
-$ qaren diff backup-old backup-new -w
--[L47] TimeoutOverflowWarning: does not fit into a 32-bit integer.
-+[L47] TimeoutOverflowWarning: 3000010000 does not fit into a 32-bit integer.
-```
+
+<p align="center">
+  <b>أداة Diff التقليدية (POSIX)</b><br>
+  <img src="../icons/diff.gif" width="100%" alt="Traditional POSIX Diff">
+</p>
+
+<p align="center">
+  <b>مقارنة قارن المحسنة (Qaren)</b><br>
+  <img src="../icons/qaren-diff.gif" width="100%" alt="Qaren Enhanced Diff">
+</p>
 
 ### 3. تقليل الضجيج الذكي
 يقوم "قارن" تلقائياً بإخفاء تحذيرات المفاتيح المتكررة وتنبيهات الأذونات بشكل افتراضي للحفاظ على نظافة الطرفية. إذا كنت بحاجة للمساعدة في استكشاف الأخطاء وإصلاحها، قم بتشغيل `qaren config advisor toggle` لتمكين التنبيهات المفيدة.

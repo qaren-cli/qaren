@@ -32,7 +32,7 @@
 
 ---
 
-## Почему Qaren? <img src="../icons/favicon.png" width="24" height="24"> &nbsp; [<img src="../icons/icons8-linkedin-48.png" width="24" height="24">](https://www.linkedin.com/in/alielesawy) &nbsp; [<img src="../icons/icons8-github-48.png" width="24" height="24">](https://github.com/alielesawy)
+## Почему Qaren? [<img src="../icons/favicon.png" width="24" height="24">](https://qaren.me) &nbsp; [<img src="../icons/icons8-linkedin-48.png" width="24" height="24">](https://www.linkedin.com/in/alielesawy) &nbsp; [<img src="../icons/icons8-github-48.png" width="24" height="24">](https://github.com/alielesawy)
 
 Стандартный POSIX `diff` служит нам уже 50 лет, но он был разработан для исходного кода, а не для сложных, не зависящих от порядка конфигурационных файлов и огромных системных бэкапов современности.
 
@@ -62,11 +62,16 @@ Qaren (с арабского **«Сравнивать»**) — это много
 
 ### 2. Улучшенный вывод
 Qaren предоставляет гораздо более четкие построчные различия, чем POSIX diff, специально оптимизированные для анализа файлов бэкапов.
-```bash
-$ qaren diff backup-old backup-new -w
--[L47] TimeoutOverflowWarning: does not fit into a 32-bit integer.
-+[L47] TimeoutOverflowWarning: 3000010000 does not fit into a 32-bit integer.
-```
+
+<p align="center">
+  <b>Традиционный POSIX Diff</b><br>
+  <img src="../icons/diff.gif" width="100%" alt="Traditional POSIX Diff">
+</p>
+
+<p align="center">
+  <b>Улучшенный Qaren Diff</b><br>
+  <img src="../icons/qaren-diff.gif" width="100%" alt="Qaren Enhanced Diff">
+</p>
 
 ### 3. Умное шумоподавление
 Сравниваете бэкапы JSON в режиме KV? Qaren автоматически скрывает предупреждения о дубликатах ключей и правах доступа по умолчанию. Если вам нужна помощь в отладке, запустите `qaren config advisor toggle`, чтобы включить полезные оповещения.
@@ -106,7 +111,7 @@ cargo install qaren
 qaren kv -Q --d2 ":" dev.env staging.env
 ```
 <p align="center">
-  <img src="../icons/Qd2.gif" width="100%" alt="Базовый семантический diff">
+  <img src="../icons/Qd2.gif" width="100%" alt="Basic Semantic Diff">
 </p>
 
 ### 2. Режим сводки
@@ -124,7 +129,7 @@ qaren kv -Q --d2 ":" dev.env staging.env -s
 qaren kv -Q --d2 ":" dev.env staging.env -o json
 ```
 <p align="center">
-  <img src="../icons/Qd2o.gif" width="100%" alt="Экспорт в JSON">
+  <img src="../icons/Qd2o.gif" width="100%" alt="Export JSON">
 </p>
 
 ### 4. Показать секреты
