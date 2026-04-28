@@ -1,6 +1,6 @@
-<svg width="600" height="220" xmlns="http://www.w3.org/2000/svg">
+<svg width="600" height="250" xmlns="http://www.w3.org/2000/svg">
   <!-- Terminal Window Background -->
-  <rect width="600" height="220" rx="10" ry="10" fill="#1e1e1e" />
+  <rect width="600" height="250" rx="10" ry="10" fill="#1e1e1e" />
   
   <!-- Title Bar -->
   <path d="M 0 10 A 10 10 0 0 1 10 0 L 590 0 A 10 10 0 0 1 600 10 L 600 35 L 0 35 Z" fill="#333333" />
