@@ -189,18 +189,38 @@ qaren kv ... -g missing.env --mask-patches
 ---
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> Comparaison Littérale (Diff)
+
+### 1. Comparaison de base
+Comparaison standard ligne par ligne avec une lisibilité accrue.
 ```bash
-# Format unified diff (conforme POSIX)
+qaren diff file1.txt file2.txt
+```
+
+### 2. Format Unified
+Sortie diff unifiée compatible POSIX.
+```bash
 qaren diff file1.txt file2.txt -u
+```
 
-# Diff de répertoire récursif
-qaren diff -r ./backup-old ./backup-new
+### 3. Diff de répertoire récursif
+Comparez des structures de répertoires entières, en identifiant les fichiers orphelins et les différences dans ceux existants.
+```bash
+qaren diff -r old-backup/ new-backup/
+```
+<p align="center">
+  <img src="../icons/qaren-diff-R.gif" width="100%" alt="Recursive Directory Diff">
+</p>
 
+### 4. Options avancées
+```bash
 # Supprimer les couleurs ANSI des fichiers de sauvegarde avant le diff
 qaren diff backup_polluted.txt backup_clean.txt -A
 
 # Ignorer les espaces blancs et les lignes vides
 qaren diff f1.txt f2.txt -w -B
+
+# Afficher uniquement les fichiers qui diffèrent (mode récursif)
+qaren diff -r old-backup/ new-backup/ --files-only
 ```
 
 ---

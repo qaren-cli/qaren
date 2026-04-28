@@ -189,18 +189,38 @@ qaren kv ... -g missing.env --mask-patches
 ---
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> 字面量对比 (Diff)
+
+### 1. 基础对比
+标准的逐行对比，具有增强的可读性。
 ```bash
-# 统一 diff 格式（符合 POSIX 标准）
+qaren diff file1.txt file2.txt
+```
+
+### 2. Unified 格式
+符合 POSIX 标准的 unified diff 输出。
+```bash
 qaren diff file1.txt file2.txt -u
+```
 
-# 递归目录对比
-qaren diff -r ./backup-old ./backup-new
+### 3. 递归目录对比
+对比整个目录结构，识别孤立文件和现有文件的差异。
+```bash
+qaren diff -r old-backup/ new-backup/
+```
+<p align="center">
+  <img src="../icons/qaren-diff-R.gif" width="100%" alt="Recursive Directory Diff">
+</p>
 
+### 4. 高级选项
+```bash
 # 对比前清除备份文件中的 ANSI 颜色
 qaren diff backup_polluted.txt backup_clean.txt -A
 
 # 忽略空格和空行
 qaren diff f1.txt f2.txt -w -B
+
+# 仅显示哪些文件不同（递归模式）
+qaren diff -r old-backup/ new-backup/ --files-only
 ```
 
 ---

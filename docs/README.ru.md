@@ -120,7 +120,7 @@ qaren kv -Q --d2 ":" dev.env staging.env
 qaren kv -Q --d2 ":" dev.env staging.env -s
 ```
 <p align="center">
-  <img src="../icons/Qd2s.gif" width="100%" alt="Режим сводки">
+  <img src="../icons/Qd2s.gif" width="100%" alt="Summary Mode">
 </p>
 
 ### 3. Экспорт в JSON
@@ -138,7 +138,7 @@ qaren kv -Q --d2 ":" dev.env staging.env -o json
 qaren kv -Q --d2 ":" dev.env staging.env -S
 ```
 <p align="center">
-  <img src="../icons/Qd2S.gif" width="100%" alt="Показать секреты">
+  <img src="../icons/Qd2S.gif" width="100%" alt="Show Secrets">
 </p>
 
 ### 5. Игнорировать ключи
@@ -147,7 +147,7 @@ qaren kv -Q --d2 ":" dev.env staging.env -S
 qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY
 ```
 <p align="center">
-  <img src="../icons/Qd2x.gif" width="100%" alt="Игнорировать ключи">
+  <img src="../icons/Qd2x.gif" width="100%" alt="Ignore Keys">
 </p>
 
 ### 6. Игнорировать по ключевому слову
@@ -156,7 +156,7 @@ qaren kv -Q --d2 ":" dev.env staging.env -x API_KEY
 qaren kv --ignore-keyword MAX ...
 ```
 <p align="center">
-  <img src="../icons/Qd2-ignore-keyword.gif" width="100%" alt="Игнорировать по ключевому слову">
+  <img src="../icons/Qd2-ignore-keyword.gif" width="100%" alt="Ignore Keyword">
 </p>
 
 ### 7. Тихий режим
@@ -165,7 +165,7 @@ qaren kv --ignore-keyword MAX ...
 qaren kv -Q --d2 ":" dev.env staging.env -q
 ```
 <p align="center">
-  <img src="../icons/Qd2q.gif" width="100%" alt="Тихий режим">
+  <img src="../icons/Qd2q.gif" width="100%" alt="Quiet Mode">
 </p>
 
 ### 8. Генерация патча
@@ -174,7 +174,7 @@ qaren kv -Q --d2 ":" dev.env staging.env -q
 qaren kv ... -g missing.env
 ```
 <p align="center">
-  <img src="../icons/Qd2g.gif" width="100%" alt="Генерация патча">
+  <img src="../icons/Qd2g.gif" width="100%" alt="Patch Generation">
 </p>
 
 ### 9. Безопасные патчи
@@ -183,24 +183,44 @@ qaren kv ... -g missing.env
 qaren kv ... -g missing.env --mask-patches
 ```
 <p align="center">
-  <img src="../icons/Qd2g-masked.gif" width="100%" alt="Безопасные патчи">
+  <img src="../icons/Qd2g-masked.gif" width="100%" alt="Secure Patches">
 </p>
 
 ---
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> Литеральное сравнение (Diff)
+
+### 1. Базовое сравнение
+Стандартное построчное сравнение с улучшенной читаемостью.
 ```bash
-# Формат unified diff (совместим с POSIX)
+qaren diff file1.txt file2.txt
+```
+
+### 2. Формат Unified
+POSIX-совместимый вывод в формате unified diff.
+```bash
 qaren diff file1.txt file2.txt -u
+```
 
-# Рекурсивное сравнение директорий
-qaren diff -r ./backup-old ./backup-new
+### 3. Рекурсивное сравнение директорий
+Сравнивайте целые структуры директорий, выявляя отсутствующие файлы и различия в существующих.
+```bash
+qaren diff -r old-backup/ new-backup/
+```
+<p align="center">
+  <img src="../icons/qaren-diff-R.gif" width="100%" alt="Recursive Directory Diff">
+</p>
 
+### 4. Дополнительные опции
+```bash
 # Очистка ANSI-цветов перед сравнением
 qaren diff backup_polluted.txt backup_clean.txt -A
 
 # Игнорировать пробелы и пустые строки
 qaren diff f1.txt f2.txt -w -B
+
+# Показать только различающиеся файлы (рекурсивный режим)
+qaren diff -r old-backup/ new-backup/ --files-only
 ```
 
 ---
@@ -231,12 +251,12 @@ qaren config show
 
 ---
 
-## <img src="../icons/icons8-performance-48.png" width="24" height="24"> Бенчмарки производительности
-| Сценарий | Победитель | Разрыв |
+## <img src="../icons/icons8-performance-48.png" width="24" height="24"> Performance Benchmarks
+| Scenario | Winner | Margin |
 | :--- | :--- | :--- |
-| **Большие бэкапы (100MB)** | **Qaren** | **200x+** |
-| **Рекурсия (директории)** | **Qaren** | **3x** |
-| **Массовые изменения (1М строк)** | **Qaren** | **50x+** |
+| **Large Backups (100MB)** | **Qaren** | **200x+** |
+| **Recursive Directory** | **Qaren** | **3x** |
+| **Massive Changes (1M Lines)** | **Qaren** | **50x+** |
 
 ---
 

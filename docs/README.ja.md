@@ -189,18 +189,38 @@ qaren kv ... -g missing.env --mask-patches
 ---
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> リテラル比較 (Diff)
+
+### 1. 基本的な比較
+標準的な行単位の比較。
 ```bash
-# 統合 diff 形式 (POSIX 準拠)
+qaren diff file1.txt file2.txt
+```
+
+### 2. 統合フォーマット
+POSIX 準拠の統合 diff 出力。
+```bash
 qaren diff file1.txt file2.txt -u
+```
 
-# ディレクトリの再帰的比較
-qaren diff -r ./backup-old ./backup-new
+### 3. ディレクトリの再帰的比較
+ディレクトリ構造全体を比較し、孤立したファイルや既存ファイルの差異を特定します。
+```bash
+qaren diff -r old-backup/ new-backup/
+```
+<p align="center">
+  <img src="../icons/qaren-diff-R.gif" width="100%" alt="ディレクトリの再帰的比較">
+</p>
 
+### 4. 高度なオプション
+```bash
 # 比較前にバックアップファイルから ANSI カラーを除去
 qaren diff backup_polluted.txt backup_clean.txt -A
 
 # 空白と空行を無視
 qaren diff f1.txt f2.txt -w -B
+
+# 差異のあるファイル名のみを表示（再帰モード）
+qaren diff -r old-backup/ new-backup/ --files-only
 ```
 
 ---

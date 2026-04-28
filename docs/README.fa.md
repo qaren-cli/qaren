@@ -189,18 +189,38 @@ qaren kv ... -g missing.env --mask-patches
 ---
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> مقایسه حرفی (Diff)
+
+### ۱. مقایسه پایه
+مقایسه سطر به سطر استاندارد با خوانایی بهبود یافته.
 ```bash
-# فرمت unified diff (سازگار با POSIX)
+qaren diff file1.txt file2.txt
+```
+
+### ۲. قالب Unified
+خروجی diff یکپارچه سازگار با POSIX.
+```bash
 qaren diff file1.txt file2.txt -u
+```
 
-# مقایسه بازگشتی دایرکتوری‌ها
-qaren diff -r ./backup-old ./backup-new
+### ۳. مقایسه بازگشتی دایرکتوری‌ها
+مقایسه کل ساختار دایرکتوری‌ها، شناسایی فایل‌های تنها و تفاوت‌ها در فایل‌های موجود.
+```bash
+qaren diff -r old-backup/ new-backup/
+```
+<p align="center">
+  <img src="../icons/qaren-diff-R.gif" width="100%" alt="Recursive Directory Diff">
+</p>
 
+### ۴. گزینه‌های پیشرفته
+```bash
 # پاکسازی رنگ‌های ANSI قبل از مقایسه
 qaren diff backup_polluted.txt backup_clean.txt -A
 
 # نادیده گرفتن فواصل و خطوط خالی
 qaren diff f1.txt f2.txt -w -B
+
+# فقط نشان دادن فایل‌هایی که تفاوت دارند (در حالت بازگشتی)
+qaren diff -r old-backup/ new-backup/ --files-only
 ```
 
 ---

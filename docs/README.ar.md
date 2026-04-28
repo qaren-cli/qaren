@@ -189,18 +189,38 @@ qaren kv ... -g missing.env --mask-patches
 ---
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> المقارنة الحرفية (Diff)
+
+### 1. المقارنة الأساسية
+مقارنة سطر بسطر قياسية مع سهولة قراءة معززة.
 ```bash
-# تنسيق unified diff (متوافق مع POSIX)
+qaren diff file1.txt file2.txt
+```
+
+### 2. تنسيق Unified
+مخرجات بتنسيق unified diff متوافق مع POSIX.
+```bash
 qaren diff file1.txt file2.txt -u
+```
 
-# مقارنة المجلدات بشكل متكرر
-qaren diff -r ./backup-old ./backup-new
+### 3. مقارنة المجلدات بشكل متكرر
+مقارنة هياكل المجلدات بالكامل، وتحديد الملفات اليتيمة والاختلافات في الملفات الموجودة.
+```bash
+qaren diff -r old-backup/ new-backup/
+```
+<p align="center">
+  <img src="../icons/qaren-diff-R.gif" width="100%" alt="Recursive Directory Diff">
+</p>
 
+### 4. خيارات متقدمة
+```bash
 # مسح ألوان ANSI من ملفات النسخ الاحتياطي قبل المقارنة
 qaren diff backup_polluted.txt backup_clean.txt -A
 
 # تجاهل المسافات والأسطر الفارغة
 qaren diff f1.txt f2.txt -w -B
+
+# إظهار الملفات المختلفة فقط (في النمط المتكرر)
+qaren diff -r old-backup/ new-backup/ --files-only
 ```
 
 ---

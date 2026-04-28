@@ -189,18 +189,38 @@ qaren kv ... -g missing.env --mask-patches
 ---
 
 ## <img src="../icons/icons8-rust-48.png" width="24" height="24"> Wörtlicher Vergleich (Diff)
+
+### 1. Basis-Diff
+Standardmäßiger Zeilenvergleich mit verbesserter Lesbarkeit.
 ```bash
-# Unified-Diff-Format (POSIX-konform)
+qaren diff file1.txt file2.txt
+```
+
+### 2. Unified-Format
+POSIX-konforme Unified-Diff-Ausgabe.
+```bash
 qaren diff file1.txt file2.txt -u
+```
 
-# Rekursiver Verzeichnis-Diff
-qaren diff -r ./backup-old ./backup-new
+### 3. Rekursiver Verzeichnis-Diff
+Vergleichen Sie ganze Verzeichnisstrukturen und identifizieren Sie verwaiste Dateien sowie Unterschiede in vorhandenen Dateien.
+```bash
+qaren diff -r old-backup/ new-backup/
+```
+<p align="center">
+  <img src="../icons/qaren-diff-R.gif" width="100%" alt="Rekursiver Verzeichnis-Diff">
+</p>
 
+### 4. Fortgeschrittene Optionen
+```bash
 # ANSI-Farben vor dem Diff aus Backup-Dateien entfernen
 qaren diff backup_polluted.txt backup_clean.txt -A
 
 # Leerzeichen und Leerzeilen ignorieren
 qaren diff f1.txt f2.txt -w -B
+
+# Nur anzeigen, welche Dateien sich unterscheiden (rekursiver Modus)
+qaren diff -r old-backup/ new-backup/ --files-only
 ```
 
 ---
